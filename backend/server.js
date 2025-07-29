@@ -3,6 +3,12 @@
 import Fastify from 'fastify';
 const fastify = Fastify({ logger: true})
 
+// We have to import plugin 
+import prismaPlugin from './plugins/prisma.js';
+
+// We have to register the plugin
+fastify.register(prismaPlugin);
+
 // Declaration Route 
 fastify.get('/', async function(request, reply) {
     return { hello: 'world'}
