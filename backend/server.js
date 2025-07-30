@@ -9,6 +9,10 @@ import prismaPlugin from './plugins/prisma.js';
 // We have to register the plugin
 fastify.register(prismaPlugin);
 
+// Importation of routes
+import userRoutes from './routes/userRoutes.js';
+fastify.register(userRoutes)
+
 // Declaration Route 
 fastify.get('/', async function(request, reply) {
     return { hello: 'world'}
