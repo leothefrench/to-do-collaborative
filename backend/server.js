@@ -9,9 +9,13 @@ import prismaPlugin from './plugins/prisma.js';
 // We have to register the plugin
 fastify.register(prismaPlugin);
 
-// Importation of routes
+// Importation of routes - User Routes
 import userRoutes from './routes/userRoutes.js';
 fastify.register(userRoutes)
+
+// Importation of TaskList Routes
+import taskListRoutes from './routes/tasklistRoutes.js';  
+fastify.register(taskListRoutes)
 
 // Declaration Route 
 fastify.get('/', async function(request, reply) {
