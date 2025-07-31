@@ -25,7 +25,7 @@ export default async function taskListRoutes(fastify, options) {
                 const taskLists = await fastify.prisma.taskList.findMany()
                 reply.status(200).send(taskLists)
             } catch (error) {
-                request.lor.error(error)
+                request.log.error(error)
                 reply.status(500).send({
                     message: 'Erreur lors de la récupération des listes de tâches',
                 })

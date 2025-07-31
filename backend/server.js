@@ -17,6 +17,10 @@ fastify.register(userRoutes)
 import taskListRoutes from './routes/tasklistRoutes.js';  
 fastify.register(taskListRoutes)
 
+// Importation of Task Routes
+import taskRoutes from './routes/taskRoutes.js';
+fastify.register(taskRoutes);
+
 // Declaration Route 
 fastify.get('/', async function(request, reply) {
     return { hello: 'world'}
