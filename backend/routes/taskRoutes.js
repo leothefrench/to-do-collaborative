@@ -2,6 +2,7 @@ export default async function taskRoutes(fastify, options) {
   fastify.route({
     method: 'POST',
     url: '/task',
+    preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
         const task = await fastify.prisma.task.create({
@@ -20,6 +21,7 @@ export default async function taskRoutes(fastify, options) {
   fastify.route({
     method: 'GET',
     url: '/task',
+    preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
         const task = await fastify.prisma.task.findMany();
@@ -36,6 +38,7 @@ export default async function taskRoutes(fastify, options) {
   fastify.route({
     method: 'GET',
     url: '/task/:id',
+    preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
         const task = await fastify.prisma.task.findUnique({
@@ -44,9 +47,7 @@ export default async function taskRoutes(fastify, options) {
           },
         });
         if (!task) {
-          return reply
-            .status(404)
-            .send({ message: 'Tâche non trouvée' });
+          return reply.status(404).send({ message: 'Tâche non trouvée' });
         }
         reply.status(200).send(task);
       } catch (error) {
@@ -61,6 +62,7 @@ export default async function taskRoutes(fastify, options) {
   fastify.route({
     method: 'PATCH',
     url: '/task/:id',
+    preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
         const updatedTask = await fastify.prisma.task.update({
@@ -82,6 +84,7 @@ export default async function taskRoutes(fastify, options) {
   fastify.route({
     method: 'DELETE',
     url: '/task/:id',
+    preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
         const deleteTask = await fastify.prisma.task.delete({
