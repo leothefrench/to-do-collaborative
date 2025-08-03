@@ -18,7 +18,7 @@ export default async function (fastify, option) {
                     email
                 }
             })
-            reply.status(201).send('User created successfully');
+            reply.status(201).send({ message: 'User created successfully' });
         } catch (error) {
             request.log.error(error);
             reply.status(500).send({
