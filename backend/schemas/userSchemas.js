@@ -13,9 +13,9 @@ export const registerSchema = {
 export const loginSchema = {
   body: {
     type: 'object',
-    required: ['userName', 'password'],
+    required: ['email', 'password'],
     properties: {
-      userName: { type: 'string' },
+      email: { type: 'string', format: 'email' },
       password: { type: 'string' },
     },
   },

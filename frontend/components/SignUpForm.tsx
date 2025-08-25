@@ -1,37 +1,63 @@
-'use client'
+'use client';
 
-import { Button } from "./ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card"
+import { Button } from './ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from './ui/card';
 
 // Import of validation schema and type inference
-import { loginFormSchema, LoginFormValues } from "../lib/validationZod";
-import { useForm } from "react-hook-form";
+import {
+  signUpFormSchema,
+  LoginFormValues,
+} from '../lib/schemas/signUpFormSchema';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
-import { Input } from "./ui/input";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form';
+import { Input } from './ui/input';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthContext } from '@/context/AuthContext';
 
-export const AuthForm = () => {
-
+export const SignUpForm = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter(); 
+  const router = useRouter();
+
+  // MODIFICATION ICI: Récupérez la fonction 'login' du hook useAuth
+  const { login, user } = useAuthContext();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/tasks');
+    }
+  }, [user, router]);
 
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginFormSchema),
+    resolver: zodResolver(signUpFormSchema),
     defaultValues: {
-       userName: '',
+      userName: '',
       email: '',
-      password: ''
-    }
-  })
+      password: '',
+    },
+  });
 
-  async function onSubmit(values: z.infer<typeof loginFormSchema>) {
+  async function onSubmit(values: z.infer<typeof signUpFormSchema>) {
     console.log(values);
 
-    setIsLoading(true)
-    
+    setIsLoading(true);
+
     try {
       const response = await fetch('http://localhost:3001/auth/register', {
         method: 'POST',
@@ -39,16 +65,20 @@ export const AuthForm = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(values),
-      })
+      });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Une erreur est survenue lors de l\'inscription');
+        throw new Error(
+          errorData.message || "Une erreur est survenue lors de l'inscription"
+        );
       }
       const result = await response.json();
-      console.log('Inscription réussie:', result);
-      // Here , what we want from the response
+      console.log('Inscription réussie:', result.token);
+      console.log('Token reçu:', result.token);
 
-      router.push('/tasks');
+      // MODIFICATION ICI: Appelez la fonction login avec le token reçu
+      await login(result.token);
+
       form.reset();
     } catch (error) {
       console.log('Error during registration:', error);
@@ -61,7 +91,7 @@ export const AuthForm = () => {
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Connexion / Inscription</CardTitle>
+        <CardTitle>Inscription</CardTitle>
         <CardDescription>
           Connecter vous pour voir votre liste de tâches
         </CardDescription>
@@ -69,13 +99,12 @@ export const AuthForm = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <CardContent className="grid gap-4">
-            {/* Début du nouveau FormField pour le nom d'utilisateur */}
             <FormField
               control={form.control}
               name="userName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nom d'utilisateur</FormLabel>
+                  <FormLabel>Nom d&apos;utilisateur</FormLabel>
                   <FormControl>
                     <Input placeholder="JohnDoe" {...field} />
                   </FormControl>
@@ -83,7 +112,6 @@ export const AuthForm = () => {
                 </FormItem>
               )}
             />
-            {/* FormField pour l'email */}
             <FormField
               control={form.control}
               name="email"
@@ -97,8 +125,6 @@ export const AuthForm = () => {
                 </FormItem>
               )}
             />
-
-            {/* FormField pour le mot de passe */}
             <FormField
               control={form.control}
               name="password"
@@ -114,12 +140,12 @@ export const AuthForm = () => {
             />
           </CardContent>
           <CardFooter>
-            <Button className="w-full" type="submit">
-              Se connecter
+            <Button className="w-full" type="submit" disabled={isLoading}>
+              S&apos;enregister
             </Button>
           </CardFooter>
         </form>
       </Form>
     </Card>
   );
-}
+};

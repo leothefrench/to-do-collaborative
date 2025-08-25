@@ -102,4 +102,20 @@ export default async function userRoutes(fastify, options) {
       }
     },
   });
+
+  fastify.get(
+    '/me',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const user = request.user;
+      if (!user) {
+        return reply.code(401).send({ message: 'Non autorisé' });
+      }
+      return {
+        id: user.id,
+        userName: user.userName,
+        email: user.email,
+      };
+    }
+  );
 }

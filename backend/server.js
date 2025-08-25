@@ -8,15 +8,22 @@ import taskListRoutes from './routes/tasklistRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import cors from '@fastify/cors';
 
+import fastifyCookie from '@fastify/cookie';
+
 const fastify = Fastify({ logger: true });
 
 // CORS Policy
 fastify.register(cors, {
-  origin: '*', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
 });
 
+
+
 fastify.register(async (instance, opts) => {
+  instance.register(fastifyCookie);
+  
   await instance.register(fastifyEnv, {
     confKey: 'config',
     dotenv: true,
@@ -36,15 +43,26 @@ fastify.register(async (instance, opts) => {
   // 3. Et on peut enregistrer le plugin JWT en utilisant la configuration
   instance.register(fastifyJwt, {
     secret: instance.config.JWT_SECRET,
+    cookie: {
+      cookieName: 'token',
+      signed: false,
+    },
   });
 
   // Function to authenticate requests using JWT
   instance.decorate('authenticate', async function (request, reply) {
     try {
-      await request.jwtVerify();
+      const authHeader = request.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return reply.status(401).send({ message: 'Token manquant' });
+      }
+
+      const token = authHeader.substring(7);
+      await request.jwtVerify({ token });
     } catch (err) {
-      reply.send(err)
-  }
+      reply.status(401).send({ message: 'Token invalide ou expiré' });
+    }
 })
 
   instance.register(prismaPlugin);
