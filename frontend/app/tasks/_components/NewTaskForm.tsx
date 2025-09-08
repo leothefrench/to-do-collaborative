@@ -8,14 +8,12 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-// ✅ Schéma de validation avec Zod
 const taskSchema = z.object({
   title: z.string().min(1, 'Le titre est requis'),
   description: z.string().optional(),
@@ -24,7 +22,12 @@ const taskSchema = z.object({
 
 type TaskFormValues = z.infer<typeof taskSchema>;
 
-export default function NewTaskForm() {
+type NewTaskFormProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
+export default function NewTaskForm({ open, onClose }: NewTaskFormProps) {
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -37,17 +40,17 @@ export default function NewTaskForm() {
   const onSubmit = (data: TaskFormValues) => {
     console.log('📌 Nouvelle tâche :', data);
     // TODO : brancher Prisma + Neon (server action)
+    form.reset()
+    onClose()
   };
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button className="w-full">+ Nouvelle tâche</Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onClose}>
       <SheetContent side="right" className="sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Créer une nouvelle tâche</SheetTitle>
         </SheetHeader>
+
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col gap-4 mt-4"
@@ -89,7 +92,7 @@ export default function NewTaskForm() {
             )}
           </div>
 
-          {/* Submit */}
+          {/* Bouton de soumission */}
           <Button type="submit" className="mt-2">
             Ajouter la tâche
           </Button>

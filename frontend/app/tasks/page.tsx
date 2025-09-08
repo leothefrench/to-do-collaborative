@@ -2,12 +2,15 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { LayoutDashboard, ListTodo, Star, Menu } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Star, Menu, Plus } from 'lucide-react';
+import NewTaskForm from '@/app/tasks/_components/NewTaskForm';
 
 export default function TasksPage() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
+  const [showForm, setShowForm] = useState(false)
 
   const NavLinks = () => (
     <nav aria-label="Navigation principale">
@@ -40,6 +43,22 @@ export default function TasksPage() {
           </Link>
         </li>
       </ul>
+      <div className="mt-6">
+        <Button
+          onClick={() => setShowForm((prev) => !prev)}
+          aria-expanded={showForm}
+          aria-controls="new-task-form"
+          className="w-full flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Nouvelle tâche
+        </Button>
+        {showForm && (
+          <div id="new-task-form" className="mt-4">
+            <NewTaskForm open={showForm} onClose={() => setShowForm(false)} />
+          </div>
+        )}
+      </div>
     </nav>
   );
 
