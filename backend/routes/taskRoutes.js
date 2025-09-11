@@ -1,12 +1,11 @@
 export default async function taskRoutes(fastify, options) {
-  // 🔹 Créer une tâche
+
   fastify.route({
     method: 'POST',
     url: '/tasks',
     preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
-        // Vérifie que la taskList appartient bien à l'utilisateur
         const taskList = await fastify.prisma.taskList.findUnique({
           where: { id: request.body.taskListId },
         });
@@ -24,7 +23,9 @@ export default async function taskRoutes(fastify, options) {
             status: request.body.status,
             dueDate: request.body.dueDate,
             priority: request.body.priority,
-            taskListId: request.body.taskListId,
+            taskList: {
+              connect: { id: request.body.taskListId }, // NOUVEAU
+            },
           },
         });
 

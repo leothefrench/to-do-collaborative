@@ -30,6 +30,8 @@ export default function TasksPage() {
     },
   ];
 
+  const token = 'votre_token_d_authentification_ici';
+
   const NavLinks = () => (
     <nav aria-label="Navigation principale">
       <ul className="space-y-4">
@@ -72,7 +74,7 @@ export default function TasksPage() {
               Nouvelle tâche
             </Button>
           </SheetTrigger>
-          <NewTaskForm taskLists={taskLists} />
+          <NewTaskForm taskLists={taskLists} token={token} />
         </Sheet>
         {/* J'ajoute le même schéma pour la création d'une nouvelle liste. */}
         <Sheet
