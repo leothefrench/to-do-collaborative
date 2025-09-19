@@ -1,5 +1,10 @@
 'use client';
 
+// 🟢 AJOUT : Imports pour gérer la navigation et le rafraîchissement des données.
+import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+// 🟢 AJOUT : Imports de TanStack Query pour la gestion des mutations et du cache.
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
+// 🟢 AJOUT : Import de la Server Action pour la création de la liste de tâches.
+import { createTaskList } from '@/actions/taskActions';
+
 const taskListSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
   description: z.string().optional(),
@@ -17,7 +25,17 @@ const taskListSchema = z.object({
 
 type TaskListFormValues = z.infer<typeof taskListSchema>;
 
-export default function NewTaskListForm() {
+type NewTaskListFormProps = {
+  token: string;
+};
+
+export default function NewTaskListForm({ token }: NewTaskListFormProps) {
+  // 🟢 AJOUT : On récupère l'instance du routeur et du client de requête pour gérer la navigation et le cache.
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  // 🟢 AJOUT : useTransition gère l'état de la soumission pour l'interface utilisateur.
+  const [isPending, startTransition] = useTransition();
+
   const form = useForm<TaskListFormValues>({
     resolver: zodResolver(taskListSchema),
     defaultValues: {
@@ -26,12 +44,41 @@ export default function NewTaskListForm() {
     },
   });
 
-  const onSubmit = (data: TaskListFormValues) => {
-    console.log('📌 Nouvelle liste de tâches :', data);
-    // TODO : appel backend / server action
-    form.reset();
+  // 🟢 AJOUT : useMutation pour appeler la Server Action et gérer les états asynchrones.
+  const { mutate, isPending: isMutating } = useMutation({
+    mutationFn: async (data: TaskListFormValues) => {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('description', data.description || '');
 
-    toast.success('Liste créée avec succès !');
+      const result = await createTaskList(formData, token);
+      if (result && result.success === false) {
+        throw new Error(result.message);
+      }
+      return result;
+    },
+    // 🟢 AJOUT : Gère le succès de la mutation.
+    onSuccess: () => {
+      // Invalide le cache de TanStack Query pour rafraîchir la liste.
+      queryClient.invalidateQueries({ queryKey: ['taskLists', token] });
+      // Rafraîchit la page côté serveur pour garantir que la nouvelle liste apparaît.
+      startTransition(() => {
+        router.refresh();
+      });
+      // Affiche une notification de succès.
+      toast.success('Liste créée avec succès !');
+      // Réinitialise le formulaire.
+      form.reset();
+    },
+    // 🟢 AJOUT : Gère l'erreur de la mutation.
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // 🟢 MODIFICATION : onSubmit appelle maintenant la fonction `mutate` du hook `useMutation`.
+  const onSubmit = (data: TaskListFormValues) => {
+    mutate(data);
   };
 
   return (
@@ -67,9 +114,13 @@ export default function NewTaskListForm() {
             {...form.register('description')}
           />
         </div>
-
-        <Button type="submit" className="mt-2">
-          Ajouter la liste
+        {/* 🟢 MODIFICATION : Le bouton est désactivé pendant la soumission. */}
+        <Button
+          type="submit"
+          className="mt-2"
+          disabled={isMutating || isPending}
+        >
+          {isMutating || isPending ? 'Création...' : 'Ajouter la liste'}
         </Button>
       </form>
     </SheetContent>

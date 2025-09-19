@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+
 
 const API_URL = 'http://localhost:3001';
 
@@ -27,7 +27,15 @@ export async function getUserTasks(token: string) {
 }
 
 export async function createTask(formData: FormData, token: string) {
-  const data = Object.fromEntries(formData.entries());
+
+    const data = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      status: formData.get('status'),
+      dueDate: formData.get('dueDate'),
+      priority: formData.get('priority'),
+      taskListId: formData.get('taskListId'),
+    };
 
   try {
     const response = await fetch(`${API_URL}/tasks`, {
@@ -41,15 +49,66 @@ export async function createTask(formData: FormData, token: string) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Échec de la création de la tâche');
+      return {
+        success: false,
+        message: errorData.message || 'Échec de la création de la tâche',
+      };
     }
 
-    revalidatePath('/tasks');
-    redirect('/tasks');
+    revalidatePath('/dashboard');
+    return { success: true, message: 'Tâche créée avec succès' };
   } catch (error) {
     console.error('Erreur lors de la création de la tâche :', error);
-    if (error instanceof Error) {
-      return { success: false, message: error.message };
+    return { success: false, message: 'Une erreur inattendue est survenue.' };
+  }
+}
+
+export async function getTaskLists(token: string) {
+  try {
+    const res = await fetch('http://localhost:3001/tasklists', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch task lists');
     }
+
+    const taskLists = await res.json();
+    return taskLists;
+  } catch (error) {
+    console.error('getTaskLists error:', error);
+    return [];
+  }
+}
+
+export async function createTaskList(formData: FormData, token: string) {
+  const data = Object.fromEntries(formData.entries());
+
+  try {
+    const response = await fetch(`${API_URL}/tasklists`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return {
+        success: false,
+        message: errorData.message || 'Échec de la création.',
+      };
+    }
+
+    revalidatePath('/dashboard');
+    return { success: true, message: 'Liste créée avec succès !' };
+  } catch (error) {
+    console.error('Erreur lors de la création de la liste de tâches :', error);
+    return { success: false, message: 'Erreur inattendue.' };
   }
 }

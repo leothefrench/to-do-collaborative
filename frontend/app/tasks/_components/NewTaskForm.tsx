@@ -1,10 +1,12 @@
-// src/app/tasks/_components/NewTaskForm.tsx
-
 'use client';
 
-// 🟢 On garde seulement les imports nécessaires pour les composants de l'UI.
-// Les imports de 'react-hook-form' et 'zod' ne sont plus nécessaires
-// pour la soumission du formulaire, on peut les supprimer.
+import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -18,27 +20,84 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// 🟢 On importe la Server Action que nous avons créée.
 import { createTask } from '@/actions/taskActions';
-
-// Définitions de types
-type State = 'TODO' | 'IN_PROGRESS' | 'DONE';
-type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
 
 type TaskList = {
   id: string;
   name: string;
 };
 
-// 🟢 La signature du composant change pour recevoir le 'token' en tant que prop.
+
+const taskSchema = z.object({
+  title: z.string().min(1, 'Le titre est requis.'),
+  description: z.string().min(0, 'La description est requise.'),
+  status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']),
+  dueDate: z.string().min(0, "La date d'échéance est requise."),
+  taskListId: z.string().min(1, 'La liste est requise.'),
+});
+
+type TaskFormValues = z.infer<typeof taskSchema>;
+
 type NewTaskFormProps = {
   taskLists: TaskList[];
   token: string;
 };
 
 export default function NewTaskForm({ taskLists, token }: NewTaskFormProps) {
-  // 🟢 On supprime toute la logique de 'react-hook-form' (useForm, onSubmit, etc.).
-  // C'est maintenant la Server Action qui gère la soumission.
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [isPending, startTransition] = useTransition();
+
+const form = useForm<TaskFormValues>({
+  resolver: zodResolver(taskSchema),
+  defaultValues: {
+    title: '',
+    description: '',
+    status: 'TODO',
+    priority: 'MEDIUM',
+    dueDate: '',
+    taskListId: '',
+  },
+});
+
+  // 🟢 MODIFICATION : useMutation pour appeler la Server Action et gérer les états asynchrones
+  const { mutate, isPending: isMutating } = useMutation({
+    mutationFn: async (data: TaskFormValues) => {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value) {
+          formData.append(key, value);
+        }
+      });
+
+      const result = await createTask(formData, token);
+      if (result && result.success === false) {
+        throw new Error(result.message);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', token] });
+      startTransition(() => {
+        router.refresh();
+      });
+      toast.success('Tâche créée avec succès !');
+      form.reset();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // 🟢 MODIFICATION : onSubmit appelle la fonction `mutate` du hook `useMutation`
+  const onSubmit = (data: TaskFormValues) => {
+    const formattedData = {
+      ...data,
+      dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : '',
+    };
+    mutate(formattedData);
+  };
 
   return (
     <SheetContent side="right" className="sm:max-w-md">
@@ -46,19 +105,20 @@ export default function NewTaskForm({ taskLists, token }: NewTaskFormProps) {
         <SheetTitle>Créer une nouvelle tâche</SheetTitle>
       </SheetHeader>
 
-      {/* 🟢 Le formulaire utilise l'attribut 'action' pour appeler la Server Action. */}
-      {/* Cela remplace le `onSubmit={form.handleSubmit(onSubmit)}` précédent. */}
+      {/* 🟢 MODIFICATION : Le formulaire utilise onSubmit de react-hook-form */}
       <form
-        action={(formData) => createTask(formData, token)}
+        onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-4 mt-4"
         aria-label="Formulaire de création de tâche"
       >
-        {/* Champ de sélection de la liste de tâches */}
         <div className="flex flex-col gap-2">
-          <Label htmlFor="taskList">Liste</Label>
-          {/* 🟢 Ajout de l'attribut 'name' pour que le FormData puisse le récupérer. */}
-          <Select name="taskListId">
-            <SelectTrigger id="taskList">
+          <Label htmlFor="taskListId">Liste</Label>
+          {/* 🟢 MODIFICATION : Le Select utilise onValueChange pour la gestion de l'état */}
+          <Select
+            onValueChange={(value) => form.setValue('taskListId', value)}
+            defaultValue={form.getValues('taskListId')}
+          >
+            <SelectTrigger id="taskListId">
               <SelectValue placeholder="Sélectionner une liste" />
             </SelectTrigger>
             <SelectContent>
@@ -69,39 +129,47 @@ export default function NewTaskForm({ taskLists, token }: NewTaskFormProps) {
               ))}
             </SelectContent>
           </Select>
-          {/* 🟢 On peut supprimer les messages d'erreur de 'react-hook-form'. */}
+          {form.formState.errors.taskListId && (
+            <p className="text-red-500 text-sm">
+              {form.formState.errors.taskListId.message}
+            </p>
+          )}
         </div>
 
-        {/* Champ pour le titre */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="title">Titre</Label>
-          {/* 🟢 Remplacement de `...form.register('title')` par l'attribut 'name'. */}
+          {/* 🟢 MODIFICATION : L'Input utilise la fonction register */}
           <Input
             id="title"
             placeholder="Entrez un titre"
-            name="title"
-            required
+            {...form.register('title')}
           />
-          {/* 🟢 On peut supprimer les messages d'erreur. */}
+          {form.formState.errors.title && (
+            <p className="text-red-500 text-sm">
+              {form.formState.errors.title.message}
+            </p>
+          )}
         </div>
 
-        {/* Champ pour la description */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="description">Description</Label>
-          {/* 🟢 Remplacement de `...form.register('description')` par l'attribut 'name'. */}
+          {/* 🟢 MODIFICATION : Le Textarea utilise la fonction register */}
           <Textarea
             id="description"
             placeholder="Détails de la tâche"
-            name="description"
+            {...form.register('description')}
           />
         </div>
 
-        {/* Champ pour le statut */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="status">Statut</Label>
-          {/* 🟢 Remplacement de 'onValueChange' par 'name' et ajout d'une 'defaultValue'. */}
-          {/* 🟢 Les valeurs de 'SelectItem' sont en majuscules pour correspondre à votre ENUM Prisma. */}
-          <Select name="status" defaultValue="TODO">
+          {/* 🟢 MODIFICATION : Le Select utilise onValueChange */}
+          <Select
+            onValueChange={(value) =>
+              form.setValue('status', value as 'TODO' | 'IN_PROGRESS' | 'DONE')
+            }
+            defaultValue={form.getValues('status')}
+          >
             <SelectTrigger id="status">
               <SelectValue placeholder="Sélectionner un statut" />
             </SelectTrigger>
@@ -113,12 +181,15 @@ export default function NewTaskForm({ taskLists, token }: NewTaskFormProps) {
           </Select>
         </div>
 
-        {/* Champ pour la priorité */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="priority">Priorité</Label>
-          {/* 🟢 Remplacement de 'onValueChange' par 'name' et ajout d'une 'defaultValue'. */}
-          {/* 🟢 Les valeurs de 'SelectItem' sont en majuscules pour correspondre à votre ENUM Prisma. */}
-          <Select name="priority" defaultValue="MEDIUM">
+          {/* 🟢 MODIFICATION : Le Select utilise onValueChange */}
+          <Select
+            onValueChange={(value) =>
+              form.setValue('priority', value as 'LOW' | 'MEDIUM' | 'HIGH')
+            }
+            defaultValue={form.getValues('priority')}
+          >
             <SelectTrigger id="priority">
               <SelectValue placeholder="Définir la priorité" />
             </SelectTrigger>
@@ -130,16 +201,19 @@ export default function NewTaskForm({ taskLists, token }: NewTaskFormProps) {
           </Select>
         </div>
 
-        {/* Champ pour la date d'échéance */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="dueDate">Date d'échéance</Label>
-          {/* 🟢 Remplacement de `...form.register('dueDate')` par l'attribut 'name'. */}
-          <Input id="dueDate" type="date" name="dueDate" />
-          {/* 🟢 On peut supprimer les messages d'erreur. */}
+          {/* 🟢 MODIFICATION : L'Input utilise la fonction register */}
+          <Input id="dueDate" type="date" {...form.register('dueDate')} />
         </div>
 
-        <Button type="submit" className="mt-2">
-          Ajouter la tâche
+        {/* 🟢 MODIFICATION : Le bouton est désactivé pendant la soumission */}
+        <Button
+          type="submit"
+          className="mt-2"
+          disabled={isMutating || isPending}
+        >
+          {isMutating || isPending ? 'Ajout en cours...' : 'Ajouter la tâche'}
         </Button>
       </form>
     </SheetContent>

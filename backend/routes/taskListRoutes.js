@@ -9,7 +9,7 @@ export default async function taskListRoutes(fastify, options) {
         const taskList = await fastify.prisma.taskList.create({
           data: {
             ...request.body,
-            ownerId: request.user.userId, // ✅ assignation au bon user
+            ownerId: request.user.userId,
           },
         });
         reply.status(201).send(taskList);
