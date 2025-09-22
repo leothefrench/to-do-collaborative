@@ -1,18 +1,37 @@
 'use client';
 
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 
 import { useAuthContext } from '@/context/AuthContext';
-import { getUserTasks, getTaskLists } from '@/actions/taskActions';
+import { getUserTasks, getTaskLists, deleteTask } from '@/actions/taskActions';
 import NewTaskForm from './NewTaskForm';
 import NewTaskListForm from './NewTaskListForm';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Plus, ListTodo } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Plus, ListTodo, Trash2 } from 'lucide-react';
 
 export default function AllTasks() {
+  const queryClient = useQueryClient();
   const { user, loading } = useAuthContext();
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   const [
     { data: tasks = [], isLoading: tasksLoading, isError: tasksError },
@@ -39,6 +58,16 @@ export default function AllTasks() {
       },
     ],
   });
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!token) {
+      console.error('Token manquant. Impossible de supprimer la tâche.');
+      return;
+    }
+
+    await deleteTask(taskId, token);
+    queryClient.invalidateQueries({ queryKey: ['tasks', token] });
+  };
 
   if (loading || tasksLoading || listsLoading) {
     return <p>Chargement des données...</p>;
@@ -97,15 +126,49 @@ export default function AllTasks() {
           {tasks.map((task: any) => (
             <li
               key={task.id}
-              className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition"
+              className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition flex items-center justify-between" // 🟢 Ajout de classes flexbox
             >
-              <h3 className="font-semibold">{task.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                Deadline :{' '}
-                {task.dueDate
-                  ? new Date(task.dueDate).toLocaleDateString()
-                  : 'Non définie'}
-              </p>
+              <div>
+                <h3 className="font-semibold">{task.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  Deadline :{' '}
+                  {task.dueDate
+                    ? new Date(task.dueDate).toLocaleDateString()
+                    : 'Non définie'}
+                </p>
+              </div>
+
+              {/* 🟢 Ajout du composant AlertDialog */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    aria-label="Supprimer la tâche"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Confirmez-vous la suppression ?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Cette action est irréversible. La suppression de la tâche
+                      sera définitive.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDeleteTask(task.id)}
+                    >
+                      Confirmer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </li>
           ))}
         </ul>

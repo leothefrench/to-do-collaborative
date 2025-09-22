@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache';
 
-
 const API_URL = 'http://localhost:3001';
 
 export async function getUserTasks(token: string) {
@@ -60,6 +59,29 @@ export async function createTask(formData: FormData, token: string) {
   } catch (error) {
     console.error('Erreur lors de la création de la tâche :', error);
     return { success: false, message: 'Une erreur inattendue est survenue.' };
+  }
+}
+
+// Server Action pour la suppression d'une tâche
+export async function deleteTask(taskId: string, token: string) {
+  try {
+    const res = await fetch(`${API_URL}/tasks/${taskId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Échec de la suppression de la tâche.');
+    }
+
+    // 🟢 Met à jour le cache de la page pour rafraîchir l'interface
+    revalidatePath('/tasks');
+  } catch (error) {
+    console.error('Erreur lors de la suppression de la tâche:', error);
+    return { error: 'Erreur lors de la suppression de la tâche' };
   }
 }
 

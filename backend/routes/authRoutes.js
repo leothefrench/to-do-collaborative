@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { registerSchema, loginSchema } from '../schemas/userSchemas.js';
 
+
 export default async function (fastify, option) {
   fastify.route({
     method: 'POST',
@@ -49,15 +50,12 @@ export default async function (fastify, option) {
 
         const passwordsMatch = await bcrypt.compare(password, user.password);
 
-        // Comparaison des mots de passe
         if (!passwordsMatch) {
           return reply.status(401).send({ message: 'Identifiants invalides' });
         }
 
-        // Génération du token JWT
         const token = fastify.jwt.sign({ userId: user.id });
 
-        // Retourner le token au client
         reply.status(200).send({ message: 'Connexion réussie', token });
       } catch (error) {
         request.log.error(error);
