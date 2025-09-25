@@ -7,6 +7,11 @@ import userRoutes from './routes/userRoutes.js';
 import taskListRoutes from './routes/tasklistRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import cors from '@fastify/cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import fastifyCookie from '@fastify/cookie';
 
@@ -34,6 +39,9 @@ fastify.register(async (instance, opts) => {
         JWT_SECRET: { type: 'string' },
         DATABASE_URL: { type: 'string' },
       },
+    },
+    dotenv: {
+      path: path.join(__dirname, '.env'),
     },
   });
 

@@ -120,3 +120,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+.has-task {
+  background-color: #3b82f6; /* bg-blue-500 */
+  color: white;
+  border-radius: 50%;
+}
+.has-task:hover {
+  background-color: #2563eb; /* bg-blue-600 */
+}

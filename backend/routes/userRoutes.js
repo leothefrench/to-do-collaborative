@@ -60,6 +60,54 @@ export default async function userRoutes(fastify, options) {
     },
   });
 
+  // Ajoutez la nouvelle route pour la recherche d'utilisateurs
+  fastify.get('/users/search', {
+    handler: async (request, reply) => {
+      const { q } = request.query;
+
+  if (!q) {
+      return reply.status(400).send({ message: 'Le terme de recherche est manquant.' });
+    }
+
+    // Convertir la requête en minuscules pour la recherche
+    const searchTerm = q.toLowerCase();
+
+    try {
+      const users = await fastify.prisma.user.findMany({
+        where: {
+          OR: [
+            {
+              // Assurez-vous d'utiliser 'userName' et non 'name'
+              userName: {
+                contains: searchTerm,
+              },
+            },
+            {
+              email: {
+                contains: searchTerm,
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          userName: true,
+          email: true,
+        },
+        take: 10,
+      });
+
+      reply.send(users);
+
+    } catch (error) {
+      request.log.error(error);
+      reply.status(500).send({
+        message: 'Échec de la recherche des utilisateurs.',
+      });
+    }
+  },
+  });
+
   fastify.route({
     method: 'PUT',
     url: '/users/:id',

@@ -24,7 +24,7 @@ const Links = [
   },
   {
     label: 'Calendrier',
-    href: '/calendrier',
+    href: '/tasks/calendar',
   },
   {
     label: 'Contact',
