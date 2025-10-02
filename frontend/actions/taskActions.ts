@@ -4,17 +4,16 @@ import { revalidatePath } from 'next/cache';
 
 const API_URL = 'http://localhost:3001';
 
-export async function getUserTasks(token: string) {
+export async function getUserTasks() {
   try {
     const res = await fetch(`${API_URL}/tasks`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: {},
+      credentials: 'include',
       cache: 'no-store',
     });
 
     if (!res.ok) {
-      throw new Error('Failed to fetch tasks');
+      throw new Error('Failed to fetch tasks or not authorized');
     }
 
     const tasks = await res.json();
@@ -26,15 +25,14 @@ export async function getUserTasks(token: string) {
 }
 
 export async function createTask(formData: FormData, token: string) {
-
-    const data = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      status: formData.get('status'),
-      dueDate: formData.get('dueDate'),
-      priority: formData.get('priority'),
-      taskListId: formData.get('taskListId'),
-    };
+  const data = {
+    title: formData.get('title'),
+    description: formData.get('description'),
+    status: formData.get('status'),
+    dueDate: formData.get('dueDate'),
+    priority: formData.get('priority'),
+    taskListId: formData.get('taskListId'),
+  };
 
   try {
     const response = await fetch(`${API_URL}/tasks`, {
@@ -74,7 +72,9 @@ export async function deleteTask(taskId: string, token: string) {
 
     if (!res.ok) {
       const errorData = await res.json();
-      throw new Error(errorData.message || 'Échec de la suppression de la tâche.');
+      throw new Error(
+        errorData.message || 'Échec de la suppression de la tâche.'
+      );
     }
 
     // 🟢 Met à jour le cache de la page pour rafraîchir l'interface

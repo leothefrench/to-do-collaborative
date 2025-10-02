@@ -10,20 +10,17 @@ import { Separator } from '@/components/ui/separator';
 
 export default function CalendarComponent() {
   const { user, loading } = useAuthContext();
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [{ data: tasks = [] }] = useQueries({
     queries: [
       {
-        queryKey: ['tasks', token],
-        queryFn: ({ queryKey }) => {
-          const [_key, token] = queryKey;
-          if (!token) return Promise.resolve([]);
-          return getUserTasks(token as string);
+        queryKey: ['tasks', user?.id],
+        queryFn: () => {
+          return getUserTasks();
         },
-        enabled: !!token,
+        enabled: !!user,
       },
     ],
   });
@@ -44,7 +41,7 @@ export default function CalendarComponent() {
     return <p>Chargement en cours...</p>;
   }
 
-  if (!user || !token) {
+  if (!user) {
     return <p>Veuillez vous connecter pour voir le calendrier.</p>;
   }
 

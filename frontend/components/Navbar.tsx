@@ -121,9 +121,15 @@ export const Navbar = () => {
             </Button>
           </>
         ) : (
-          <Button asChild variant="secondary" className="h-9">
-            <Link href="/sign-up">s&apos;inscrire</Link>
-          </Button>
+          <>
+            <Button asChild variant="ghost" className="h-9">
+              <Link href="/sign-in">Se connecter</Link>
+            </Button>
+
+            <Button asChild variant="secondary" className="h-9">
+              <Link href="/sign-up">s&apos;inscrire</Link>
+            </Button>
+          </>
         )}
         <ModeToggle />
       </div>

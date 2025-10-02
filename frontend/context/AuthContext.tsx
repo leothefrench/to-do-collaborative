@@ -13,67 +13,81 @@ type User = { id: string; userName: string; email: string };
 // Type du contexte Auth
 type AuthContextType = {
   user: User | null; // Utilisateur courant ou null si non connecté
-  loading: boolean; // Pour savoir si on est en train de récupérer l'user
-  login: (token: string) => Promise<void>; // Fonction pour se connecter
+  loading: boolean; // Pour savoir si on est en train de récupérer l'user // La fonction login n'a plus besoin du token en argument car il est géré par le cookie côté serveur
+  login: () => Promise<void>;
   logout: () => void; // Fonction pour se déconnecter
 };
 
 // Création du contexte
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// URL de base de votre backend (utilisée pour éviter la répétition)
+const BACKEND_URL = 'http://localhost:3001';
+
+/**
+ * Fonction pour récupérer l'utilisateur actuel via le backend.
+ * Elle repose sur la présence du cookie 'token' envoyé automatiquement.
+ */
+const fetchUser = async (): Promise<User | null> => {
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/me`, {
+      // MODIFICATION IMPORTANTE : Inclure les cookies avec la requête
+      credentials: 'include',
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // Assurez-vous que le backend renvoie un objet utilisateur valide
+      return data.user || data;
+    }
+    // Si la réponse n'est pas OK (ex: 401 Unauthorized), cela signifie que le cookie est invalide ou absent
+    return null;
+  } catch (err) {
+    console.error('Erreur de vérification de session:', err);
+    return null;
+  }
+};
+
 // Provider Auth
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // MODIFICATION IMPORTANTE : La fonction login est simplifiée. // Elle met à jour l'état de l'utilisateur après un appel API (dans SignInForm.tsx) réussi
 
-  // Fonction login qui stocke le token et récupère l'utilisateur
-  const login = async (token: string) => {
-    localStorage.setItem('token', token);
+  // qui a déjà défini le cookie.
+  const login = async () => {
     try {
-      const res = await fetch('http://localhost:3001/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      // Mettre à jour l'état user avec les infos renvoyées par le backend
-      setUser(data.user || data);
+      // Le cookie est déjà défini par la réponse POST /auth/login, on récupère juste l'utilisateur
+      const fetchedUser = await fetchUser();
+      setUser(fetchedUser);
     } catch (err) {
       console.error('Erreur login:', err);
       setUser(null);
-      localStorage.removeItem('token');
-    } finally {
-      setLoading(false);
     }
-  };
+  }; // MODIFICATION IMPORTANTE : La fonction logout appelle la route Fastify /logout
 
-  // Fonction logout qui supprime le token et réinitialise l'utilisateur
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-  };
+  const logout = async () => {
+    try {
+      await fetch(`${BACKEND_URL}/auth/logout`, {
+        method: 'POST', // ou GET, selon votre implémentation
+        credentials: 'include', // Nécessaire pour envoyer le cookie à effacer
+      });
+      // Le serveur a effacé le cookie. On réinitialise l'état local.
+      setUser(null);
+    } catch (err) {
+      console.error('Erreur logout:', err);
+    }
+  }; // Au montage du provider, on vérifie si l'utilisateur est connecté via le cookie
 
-  // Au montage du provider, on vérifie si un token existe et on récupère l'utilisateur
   useEffect(() => {
     const initUser = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return setLoading(false);
-
-      try {
-        const res = await fetch('http://localhost:3001/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        setUser(data.user || data);
-      } catch (err) {
-        console.error('Erreur récupération user:', err);
-        setUser(null);
-        localStorage.removeItem('token');
-      } finally {
-        setLoading(false);
-      }
+      // MODIFICATION IMPORTANTE : Plus de localStorage
+      const fetchedUser = await fetchUser();
+      setUser(fetchedUser);
+      setLoading(false);
     };
 
     initUser();
-  }, []);
+  }, []); // Le tableau de dépendances vide assure l'exécution une seule fois au montage
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>

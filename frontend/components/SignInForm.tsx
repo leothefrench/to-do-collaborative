@@ -1,3 +1,5 @@
+// /components/SignInForm.tsx - CORRIGÉ ET COMPLET
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -48,9 +50,11 @@ export const SignInForm = () => {
   });
 
   const { login, user } = useAuthContext();
+  
+  // Règle de redirection côté client si l'utilisateur est déjà chargé dans le contexte
   useEffect(() => {
     if (user) {
-      router.push('/tasks');
+      router.push('/');
     }
   }, [user, router]);
 
@@ -62,6 +66,7 @@ export const SignInForm = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(values),
       });
 
@@ -72,9 +77,12 @@ export const SignInForm = () => {
 
       const result = await response.json();
       console.log('Connexion réussie:', result);
-      await login(result.token);
 
- 
+      // Met à jour l'état AuthContext en utilisant le nouveau cookie HttpOnly
+      await login();
+
+      // Redirection après succès
+      router.push('/tasks'); // Redirection vers une page protégée après la connexion
       form.reset();
     } catch (error) {
       console.error('Erreur lors de la connexion :', error);
@@ -91,8 +99,11 @@ export const SignInForm = () => {
           Entrez vos identifiants pour accéder à vos tâches
         </CardDescription>
       </CardHeader>
+      
+      {/* 🎯 CORRECTION: <Form> enveloppe tout le contenu du formulaire 🎯 */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          
           <CardContent className="grid gap-4">
             <FormField
               control={form.control}
@@ -122,11 +133,13 @@ export const SignInForm = () => {
               )}
             />
           </CardContent>
+
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
               Se connecter
             </Button>
           </CardFooter>
+
         </form>
       </Form>
     </Card>

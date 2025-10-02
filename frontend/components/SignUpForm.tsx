@@ -1,3 +1,5 @@
+// /components/SignUpForm.tsx - CORRIGÉ
+
 'use client';
 
 import { Button } from './ui/button';
@@ -35,12 +37,11 @@ export const SignUpForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // MODIFICATION ICI: Récupérez la fonction 'login' du hook useAuth
   const { login, user } = useAuthContext();
 
   useEffect(() => {
     if (user) {
-      router.push('/tasks');
+      router.push('/'); // Rediriger vers la Landing Page après l'inscription/connexion
     }
   }, [user, router]);
 
@@ -64,6 +65,7 @@ export const SignUpForm = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(values),
       });
       if (!response.ok) {
@@ -73,16 +75,15 @@ export const SignUpForm = () => {
         );
       }
       const result = await response.json();
-      console.log('Inscription réussie:', result.token);
-      console.log('Token reçu:', result.token);
+      console.log('Inscription réussie:', result);
 
-      // MODIFICATION ICI: Appelez la fonction login avec le token reçu
-      await login(result.token);
+      await login();
+
+      router.push('/tasks'); // Redirection vers une page protégée après l'inscription/connexion
 
       form.reset();
     } catch (error) {
-      console.log('Error during registration:', error);
-      // Message for User
+      console.log('Error during registration:', error); // Message for User
     } finally {
       setIsLoading(false);
     }
@@ -93,9 +94,11 @@ export const SignUpForm = () => {
       <CardHeader>
         <CardTitle>Inscription</CardTitle>
         <CardDescription>
-          Connecter vous pour voir votre liste de tâches
+          Créez votre compte pour accéder à vos tâches
         </CardDescription>
       </CardHeader>
+
+      {/* 🎯 CORRECTION: <Form> enveloppe maintenant le formulaire et les CardSections 🎯 */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <CardContent className="grid gap-4">
@@ -112,6 +115,7 @@ export const SignUpForm = () => {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="email"
@@ -125,6 +129,7 @@ export const SignUpForm = () => {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="password"
@@ -132,13 +137,14 @@ export const SignUpForm = () => {
                 <FormItem>
                   <FormLabel>Mot de passe</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} />
+                    <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </CardContent>
+
           <CardFooter>
             <Button className="w-full" type="submit" disabled={isLoading}>
               S&apos;enregister

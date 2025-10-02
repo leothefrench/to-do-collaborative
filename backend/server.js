@@ -24,10 +24,9 @@ fastify.register(cors, {
   credentials: true,
 });
 
-
+fastify.register(fastifyCookie); 
 
 fastify.register(async (instance, opts) => {
-  instance.register(fastifyCookie);
   
   await instance.register(fastifyEnv, {
     confKey: 'config',
@@ -60,18 +59,25 @@ fastify.register(async (instance, opts) => {
   // Function to authenticate requests using JWT
   instance.decorate('authenticate', async function (request, reply) {
     try {
+      let token;
+      const cookieToken = request.cookies ? request.cookies.token : undefined;
       const authHeader = request.headers.authorization;
 
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      if (cookieToken) {
+        token = cookieToken;
+      } else if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+
+      if (!token) {
         return reply.status(401).send({ message: 'Token manquant' });
       }
 
-      const token = authHeader.substring(7);
       await request.jwtVerify({ token });
     } catch (err) {
       reply.status(401).send({ message: 'Token invalide ou expiré' });
     }
-})
+  });
 
   instance.register(prismaPlugin);
   instance.register(authRoutes, { prefix: '/auth' });
