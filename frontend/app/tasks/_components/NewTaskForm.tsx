@@ -41,10 +41,9 @@ type TaskFormValues = z.infer<typeof taskSchema>;
 
 type NewTaskFormProps = {
   taskLists: TaskList[];
-  token: string;
 };
 
-export default function NewTaskForm({ taskLists, token }: NewTaskFormProps) {
+export default function NewTaskForm({ taskLists }: NewTaskFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
@@ -71,14 +70,14 @@ const form = useForm<TaskFormValues>({
         }
       });
 
-      const result = await createTask(formData, token);
+      const result = await createTask(formData);
       if (result && result.success === false) {
         throw new Error(result.message);
       }
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', token] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       startTransition(() => {
         router.refresh();
       });

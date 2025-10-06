@@ -1,30 +1,43 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 
 const API_URL = 'http://localhost:3001';
 
-export async function getUserTasks() {
-  try {
-    const res = await fetch(`${API_URL}/tasks`, {
-      headers: {},
-      credentials: 'include',
-      cache: 'no-store',
-    });
+// 🛠️ UTILITIES POUR AUTHENTIFICATION ET ERREURS
+// -----------------------------------------------------
 
-    if (!res.ok) {
-      throw new Error('Failed to fetch tasks or not authorized');
-    }
-
-    const tasks = await res.json();
-    return tasks;
-  } catch (error) {
-    console.error('getUserTasks error:', error);
-    return [];
+// Fonction pour récupérer le token JWT du cookie HttpOnly (côté Server Action)
+function getTokenFromCookie(): string {
+  const tokenCookie = cookies().get('token');
+  if (!tokenCookie || !tokenCookie.value) {
+    // Cela sera attrapé dans le bloc try/catch et affichera un message d'erreur
+    throw new Error('Non autorisé: Session expirée ou non trouvée.');
   }
+  return tokenCookie.value;
 }
 
-export async function createTask(formData: FormData, token: string) {
+// Fonction pour gérer les erreurs 'unknown' de TypeScript de manière sécurisée
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'object' && error !== null) {
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  }
+  return String(error);
+}
+
+// -----------------------------------------------------
+// 1. Server Action pour la création d'une tâche
+// -----------------------------------------------------
+export async function createTask(formData: FormData) {
+  // ❌ Suppression de l'argument token
   const data = {
     title: formData.get('title'),
     description: formData.get('description'),
@@ -35,6 +48,8 @@ export async function createTask(formData: FormData, token: string) {
   };
 
   try {
+    const token = getTokenFromCookie(); // ✅ Récupération du token sécurisée
+
     const response = await fetch(`${API_URL}/tasks`, {
       method: 'POST',
       headers: {
@@ -55,14 +70,24 @@ export async function createTask(formData: FormData, token: string) {
     revalidatePath('/dashboard');
     return { success: true, message: 'Tâche créée avec succès' };
   } catch (error) {
-    console.error('Erreur lors de la création de la tâche :', error);
-    return { success: false, message: 'Une erreur inattendue est survenue.' };
+    const errorMessage = toErrorMessage(error); // ✅ Utilisation de toErrorMessage
+    console.error('Erreur lors de la création de la tâche :', errorMessage);
+
+    return {
+      success: false,
+      message: errorMessage || 'Une erreur inattendue est survenue.',
+    };
   }
 }
 
-// Server Action pour la suppression d'une tâche
-export async function deleteTask(taskId: string, token: string) {
+// -----------------------------------------------------
+// 2. Server Action pour la suppression d'une tâche
+// -----------------------------------------------------
+export async function deleteTask(taskId: string) {
+  // ❌ Suppression de l'argument token
   try {
+    const token = getTokenFromCookie(); // ✅ Récupération du token sécurisée
+
     const res = await fetch(`${API_URL}/tasks/${taskId}`, {
       method: 'DELETE',
       headers: {
@@ -72,21 +97,31 @@ export async function deleteTask(taskId: string, token: string) {
 
     if (!res.ok) {
       const errorData = await res.json();
+      // On lance une erreur qui sera attrapée par le bloc catch
       throw new Error(
         errorData.message || 'Échec de la suppression de la tâche.'
       );
     }
 
-    // 🟢 Met à jour le cache de la page pour rafraîchir l'interface
     revalidatePath('/tasks');
   } catch (error) {
-    console.error('Erreur lors de la suppression de la tâche:', error);
-    return { error: 'Erreur lors de la suppression de la tâche' };
+    const errorMessage = toErrorMessage(error); // ✅ Utilisation de toErrorMessage
+    console.error('Erreur lors de la suppression de la tâche:', errorMessage);
+
+    return {
+      error: errorMessage || 'Erreur lors de la suppression de la tâche',
+    };
   }
 }
 
-export async function getTaskLists(token: string) {
+// -----------------------------------------------------
+// 3. Server Action pour récupérer les listes de tâches
+// -----------------------------------------------------
+export async function getTaskLists() {
+  // ❌ Suppression de l'argument token
   try {
+    const token = getTokenFromCookie(); // ✅ Récupération du token sécurisée
+
     const res = await fetch('http://localhost:3001/tasklists', {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -101,15 +136,24 @@ export async function getTaskLists(token: string) {
     const taskLists = await res.json();
     return taskLists;
   } catch (error) {
-    console.error('getTaskLists error:', error);
+    const errorMessage = toErrorMessage(error); // ✅ Utilisation de toErrorMessage
+    console.error('getTaskLists error:', errorMessage);
+
+    // Retourne un tableau vide en cas d'erreur pour ne pas casser l'interface
     return [];
   }
 }
 
-export async function createTaskList(formData: FormData, token: string) {
+// -----------------------------------------------------
+// 4. Server Action pour la création d'une liste de tâches
+// -----------------------------------------------------
+export async function createTaskList(formData: FormData) {
+  // ❌ Suppression de l'argument token
   const data = Object.fromEntries(formData.entries());
 
   try {
+    const token = getTokenFromCookie(); // ✅ Récupération du token sécurisée
+
     const response = await fetch(`${API_URL}/tasklists`, {
       method: 'POST',
       headers: {
@@ -130,7 +174,12 @@ export async function createTaskList(formData: FormData, token: string) {
     revalidatePath('/dashboard');
     return { success: true, message: 'Liste créée avec succès !' };
   } catch (error) {
-    console.error('Erreur lors de la création de la liste de tâches :', error);
-    return { success: false, message: 'Erreur inattendue.' };
+    const errorMessage = toErrorMessage(error); // ✅ Utilisation de toErrorMessage
+    console.error(
+      'Erreur lors de la création de la liste de tâches :',
+      errorMessage
+    );
+
+    return { success: false, message: errorMessage || 'Erreur inattendue.' };
   }
 }

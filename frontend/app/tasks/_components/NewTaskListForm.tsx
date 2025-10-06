@@ -25,11 +25,11 @@ const taskListSchema = z.object({
 
 type TaskListFormValues = z.infer<typeof taskListSchema>;
 
-type NewTaskListFormProps = {
-  token: string;
-};
+// ❌ SUPPRESSION : L'interface n'a plus besoin du token
+type NewTaskListFormProps = object
 
-export default function NewTaskListForm({ token }: NewTaskListFormProps) {
+// ❌ SUPPRESSION : Retrait de { token } des props
+export default function NewTaskListForm({}: NewTaskListFormProps) { 
   // 🟢 AJOUT : On récupère l'instance du routeur et du client de requête pour gérer la navigation et le cache.
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -51,7 +51,9 @@ export default function NewTaskListForm({ token }: NewTaskListFormProps) {
       formData.append('name', data.name);
       formData.append('description', data.description || '');
 
-      const result = await createTaskList(formData, token);
+      // ❌ MODIFICATION CRUCIALE : createTaskList est appelée SANS le token
+      const result = await createTaskList(formData); 
+      
       if (result && result.success === false) {
         throw new Error(result.message);
       }
@@ -59,8 +61,11 @@ export default function NewTaskListForm({ token }: NewTaskListFormProps) {
     },
     // 🟢 AJOUT : Gère le succès de la mutation.
     onSuccess: () => {
-      // Invalide le cache de TanStack Query pour rafraîchir la liste.
-      queryClient.invalidateQueries({ queryKey: ['taskLists', token] });
+      // ❌ MODIFICATION : Le queryKey doit être ajusté pour ne pas dépendre du token
+      // Nous invalidons ['taskLists'] ou ['taskLists', user?.id] si l'ID est disponible
+      // Comme l'ID utilisateur est géré par le Server Action, nous pouvons invalider ['taskLists']
+      queryClient.invalidateQueries({ queryKey: ['taskLists'], exact: false }); 
+      
       // Rafraîchit la page côté serveur pour garantir que la nouvelle liste apparaît.
       startTransition(() => {
         router.refresh();

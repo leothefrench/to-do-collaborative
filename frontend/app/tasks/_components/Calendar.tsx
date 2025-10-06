@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
+
 import { useQueries } from '@tanstack/react-query';
-import { getUserTasks } from '@/actions/taskActions';
+// import { getUserTasks } from '@/actions/taskActions';
 import { useAuthContext } from '@/context/AuthContext';
 import { Separator } from '@/components/ui/separator';
 
@@ -13,17 +13,34 @@ export default function CalendarComponent() {
   
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const [{ data: tasks = [] }] = useQueries({
-    queries: [
-      {
-        queryKey: ['tasks', user?.id],
-        queryFn: () => {
-          return getUserTasks();
-        },
-        enabled: !!user,
-      },
-    ],
-  });
+const [{ data: tasks = [] }] = useQueries({
+  queries: [
+    {
+      queryKey: ['tasks', user?.id],
+      queryFn: async () => {
+   
+        const API_URL =
+          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+    
+        const res = await fetch(`${API_URL}/tasks`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          cache: 'no-store',
+        });
+
+        if (!res.ok) {
+          return [];
+        }
+        return res.json();
+      }, 
+      enabled: !!user,
+    },
+  ],
+});
 
   const onChange = (date: Date) => {
     setSelectedDate(date);
