@@ -1,50 +1,21 @@
-'use client';
+// app/page.tsx (Ceci est un Server Component par défaut)
+import { cookies } from 'next/headers';
+import HomeContent from '@/components/HomeContent'; // ⬅️ Importez le composant Client
 
-import Link from 'next/link';
+// Fonction asynchrone pour lire l'état d'authentification côté Serveur
+async function getUserStatus() {
+  // Lit le cookie sécurisé HttpOnly (disponible uniquement côté serveur)
+  const cookieStore = await cookies();
+  const tokenCookie = cookieStore.get('token');
 
-import { Button } from '@/components/ui/button';
-import { useAuthContext } from '@/context/AuthContext';
+  // Le statut est basé sur la présence du jeton
+  return !!tokenCookie?.value;
+}
 
-export default function Home() {
-  const { user } = useAuthContext();
+// Le Server Component principal de la page
+export default async function HomePage() {
+  const isLoggedIn = await getUserStatus();
 
-   console.log('Utilisateur connecté :', user);
-
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center text-center px-4">
-      <h1 className="text-4xl md:text-5xl font-bold">
-        Gagne en clarté,{' '}
-        <span className="text-green-500">agis sans attendre.</span>
-      </h1>
-      <p className="mt-4 text-lg text-muted-foreground max-w-xl">
-        Un tableau simple, rapide, pour enfin <strong>avancer</strong>.
-      </p>
-      {user ? (
-        <div className="flex flex-col items-center mt-6">
-          <p className="text-lg font-medium mb-4">
-            Bienvenue <span className="text-green-600">{user.userName}</span> 👋
-          </p>
-          <div className="flex space-x-4">
-            <Link href="/tasks">
-              <Button>Voir mes tâches</Button>
-            </Link>
-            <Link href="/profile">
-              <Button variant="secondary">Mon profil</Button>
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center mt-6">
-          <div className="flex space-x-4">
-            <Link href="/sign-in">
-              <Button>Se connecter</Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button variant="secondary">S&apos;inscrire</Button>
-            </Link>
-          </div>
-        </div>
-      )}
-    </main>
-  );
+  // Rendu du composant Client avec l'état d'authentification déterminé par le Serveur
+  return <HomeContent isLoggedIn={isLoggedIn} />;
 }

@@ -1,19 +1,26 @@
+// Fichier : backend/server.js
+
 import Fastify from 'fastify';
 import fastifyJwt from '@fastify/jwt';
-import fastifyEnv from '@fastify/env';
+// ❌ Suppression de fastifyEnv
 import prismaPlugin from './plugins/prisma.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import taskListRoutes from './routes/tasklistRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import cors from '@fastify/cors';
+import fastifyCookie from '@fastify/cookie';
+
+// ⚠️ NOUVEAU : Imports pour le chargement manuel du .env
 import path from 'path';
 import { fileURLToPath } from 'url';
+import * as dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import fastifyCookie from '@fastify/cookie';
+// 🚨 CORRECTION CRITIQUE : Chargement du fichier .env qui est dans le dossier backend
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const fastify = Fastify({ logger: true });
 
@@ -24,32 +31,21 @@ fastify.register(cors, {
   credentials: true,
 });
 
-fastify.register(fastifyCookie); 
+fastify.register(fastifyCookie);
 
 fastify.register(async (instance, opts) => {
-  
-  await instance.register(fastifyEnv, {
-    confKey: 'config',
-    dotenv: true,
-    schema: {
-      type: 'object',
-      required: ['JWT_SECRET', 'DATABASE_URL'],
-      properties: {
-        JWT_SECRET: { type: 'string' },
-        DATABASE_URL: { type: 'string' },
-      },
-    },
-    dotenv: {
-      path: path.join(__dirname, '.env'),
-    },
-  });
+  // ⚠️ On vérifie le chargement pour éviter le plantage
+  if (!process.env.JWT_SECRET) {
+    instance.log.error(
+      'ERREUR CRITIQUE: JWT_SECRET non trouvé dans le backend. Vérifiez le fichier .env.'
+    );
+    // On lance une erreur pour arrêter le processus avant le plantage de fastify-jwt
+    throw new Error('JWT_SECRET manquant pour la configuration Fastify-JWT');
+  }
 
-  // 2. À l'intérieur de ce callback, on est sûr que la configuration est chargée
-  instance.log.info(`Le secret JWT est: ${instance.config.JWT_SECRET}`);
-
-  // 3. Et on peut enregistrer le plugin JWT en utilisant la configuration
+  // ✅ Utilisation de process.env.JWT_SECRET (maintenant chargé correctement)
   instance.register(fastifyJwt, {
-    secret: instance.config.JWT_SECRET,
+    secret: process.env.JWT_SECRET,
     cookie: {
       cookieName: 'token',
       signed: false,

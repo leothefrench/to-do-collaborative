@@ -9,8 +9,8 @@ const API_URL = 'http://localhost:3001';
 // -----------------------------------------------------
 
 // Fonction pour récupérer le token JWT du cookie HttpOnly (côté Server Action)
-function getTokenFromCookie(): string {
-  const tokenCookie = cookies().get('token');
+async function getTokenFromCookie(): Promise<string> {
+  const tokenCookie = (await cookies()).get('token');
   if (!tokenCookie || !tokenCookie.value) {
     // Cela sera attrapé dans le bloc try/catch et affichera un message d'erreur
     throw new Error('Non autorisé: Session expirée ou non trouvée.');
@@ -48,7 +48,7 @@ export async function createTask(formData: FormData) {
   };
 
   try {
-    const token = getTokenFromCookie(); // ✅ Récupération du token sécurisée
+    const token =   await getTokenFromCookie(); 
 
     const response = await fetch(`${API_URL}/tasks`, {
       method: 'POST',
@@ -86,7 +86,7 @@ export async function createTask(formData: FormData) {
 export async function deleteTask(taskId: string) {
   // ❌ Suppression de l'argument token
   try {
-    const token = getTokenFromCookie(); // ✅ Récupération du token sécurisée
+    const token = await getTokenFromCookie();
 
     const res = await fetch(`${API_URL}/tasks/${taskId}`, {
       method: 'DELETE',
@@ -105,7 +105,7 @@ export async function deleteTask(taskId: string) {
 
     revalidatePath('/tasks');
   } catch (error) {
-    const errorMessage = toErrorMessage(error); // ✅ Utilisation de toErrorMessage
+    const errorMessage = toErrorMessage(error);
     console.error('Erreur lors de la suppression de la tâche:', errorMessage);
 
     return {
@@ -120,8 +120,7 @@ export async function deleteTask(taskId: string) {
 export async function getTaskLists() {
   // ❌ Suppression de l'argument token
   try {
-    const token = getTokenFromCookie(); // ✅ Récupération du token sécurisée
-
+    const token = await getTokenFromCookie(); 
     const res = await fetch('http://localhost:3001/tasklists', {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -136,7 +135,7 @@ export async function getTaskLists() {
     const taskLists = await res.json();
     return taskLists;
   } catch (error) {
-    const errorMessage = toErrorMessage(error); // ✅ Utilisation de toErrorMessage
+    const errorMessage = toErrorMessage(error); 
     console.error('getTaskLists error:', errorMessage);
 
     // Retourne un tableau vide en cas d'erreur pour ne pas casser l'interface
@@ -152,7 +151,7 @@ export async function createTaskList(formData: FormData) {
   const data = Object.fromEntries(formData.entries());
 
   try {
-    const token = getTokenFromCookie(); // ✅ Récupération du token sécurisée
+    const token = await getTokenFromCookie();
 
     const response = await fetch(`${API_URL}/tasklists`, {
       method: 'POST',

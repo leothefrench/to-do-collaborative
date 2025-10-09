@@ -1,3 +1,5 @@
+// Fichier : components/Navbar.tsx (Nettoyé)
+
 'use client';
 
 import Image from 'next/image';
@@ -14,8 +16,7 @@ import {
 } from '@/components/ui/sheet';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { useAuthContext } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import LogoutButton from './LogoutButton';
 
 const Links = [
   {
@@ -32,21 +33,14 @@ const Links = [
   },
 ];
 
-export const Navbar = () => {
-  const router = useRouter();
+export const Navbar = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const { user, loading, logout } = useAuthContext();
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-  };
 
   return (
     <nav
@@ -107,18 +101,12 @@ export const Navbar = () => {
         </Sheet>
       </div>
       <div className="flex items-center space-x-4">
-        {loading ? null : user ? (
+        {isLoggedIn ? (
           <>
             <Button asChild variant="secondary" className="h-9">
               <Link href="/profile">Profil</Link>
             </Button>
-            <Button
-              onClick={handleLogout}
-              variant="destructive"
-              className="h-9"
-            >
-              Logout
-            </Button>
+            <LogoutButton />
           </>
         ) : (
           <>

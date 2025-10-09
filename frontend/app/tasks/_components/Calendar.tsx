@@ -1,46 +1,46 @@
+// Fichier : components/CalendarComponent.tsx (Nettoyé)
+
 'use client';
 
 import { useState } from 'react';
 import Calendar from 'react-calendar';
 
 import { useQueries } from '@tanstack/react-query';
-// import { getUserTasks } from '@/actions/taskActions';
-import { useAuthContext } from '@/context/AuthContext';
 import { Separator } from '@/components/ui/separator';
 
-export default function CalendarComponent() {
-  const { user, loading } = useAuthContext();
-  
+export default function CalendarComponent({
+  user,
+}: {
+  user: { id: string } | null;
+}) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-const [{ data: tasks = [] }] = useQueries({
-  queries: [
-    {
-      queryKey: ['tasks', user?.id],
-      queryFn: async () => {
-   
-        const API_URL =
-          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const [{ data: tasks = [], isLoading }] = useQueries({
+    queries: [
+      {
+        queryKey: ['tasks', user?.id],
+        queryFn: async () => {
+          const API_URL =
+            process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-    
-        const res = await fetch(`${API_URL}/tasks`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          cache: 'no-store',
-        });
+          const res = await fetch(`${API_URL}/tasks`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            cache: 'no-store',
+          });
 
-        if (!res.ok) {
-          return [];
-        }
-        return res.json();
-      }, 
-      enabled: !!user,
-    },
-  ],
-});
+          if (!res.ok) {
+            return [];
+          }
+          return res.json();
+        },
+        enabled: !!user,
+      },
+    ],
+  });
 
   const onChange = (date: Date) => {
     setSelectedDate(date);
@@ -54,7 +54,7 @@ const [{ data: tasks = [] }] = useQueries({
     return taskDueDate === formattedSelectedDate;
   });
 
-  if (loading) {
+  if (isLoading) {
     return <p>Chargement en cours...</p>;
   }
 
@@ -88,6 +88,7 @@ const [{ data: tasks = [] }] = useQueries({
         <h2 className="text-xl font-semibold mb-4 text-center">
           Tâches pour le {formattedSelectedDate}
         </h2>
+
         {tasksForSelectedDate.length > 0 ? (
           <ul className="space-y-3">
             {tasksForSelectedDate.map((task: any) => (
@@ -95,7 +96,7 @@ const [{ data: tasks = [] }] = useQueries({
                 key={task.id}
                 className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition"
               >
-                <h3 className="font-semibold">{task.title}</h3>
+                <h3 className="font-semibold">{task.title}</h3> 
                 <p className="text-sm text-muted-foreground">
                   Statut : {task.status}
                 </p>

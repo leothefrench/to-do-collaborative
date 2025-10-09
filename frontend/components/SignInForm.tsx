@@ -1,14 +1,15 @@
-// /components/SignInForm.tsx - CORRIGÉ ET COMPLET
+// Fichier : components/SignInForm.tsx (Correction finale)
 
 'use client';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useState } from 'react'; // ❌ SUPPRESSION: Retrait de useEffect et useState dépendants du contexte
 import { useRouter } from 'next/navigation';
 
-import { useAuthContext } from '@/context/AuthContext';
+// ❌ SUPPRESSION: On retire l'ancien contexte d'authentification
+// import { useAuthContext } from '@/context/AuthContext';
 import { Button } from './ui/button';
 import {
   Card,
@@ -49,14 +50,17 @@ export const SignInForm = () => {
     },
   });
 
-  const { login, user } = useAuthContext();
-  
-  // Règle de redirection côté client si l'utilisateur est déjà chargé dans le contexte
+  // ❌ SUPPRESSION: On retire la destructuration du contexte
+  // const { login, user } = useAuthContext();
+
+  // ❌ SUPPRESSION: On retire la règle de redirection côté client
+  /*
   useEffect(() => {
     if (user) {
       router.push('/');
     }
   }, [user, router]);
+  */
 
   const onSubmit = async (values: SignInFormValues) => {
     setIsLoading(true);
@@ -75,14 +79,14 @@ export const SignInForm = () => {
         throw new Error(errorData.message || 'Erreur de connexion');
       }
 
-      const result = await response.json();
-      console.log('Connexion réussie:', result);
+      // Le serveur Fastify a défini le cookie 'token' ici
 
-      // Met à jour l'état AuthContext en utilisant le nouveau cookie HttpOnly
-      await login();
+      // ❌ SUPPRESSION: On n'appelle plus login() du contexte
+      // await login();
 
       // Redirection après succès
-      router.push('/tasks'); // Redirection vers une page protégée après la connexion
+      router.push('/tasks');
+      router.refresh(); // Force la revalidation du cache (et du Header SC)
       form.reset();
     } catch (error) {
       console.error('Erreur lors de la connexion :', error);
@@ -99,11 +103,9 @@ export const SignInForm = () => {
           Entrez vos identifiants pour accéder à vos tâches
         </CardDescription>
       </CardHeader>
-      
-      {/* 🎯 CORRECTION: <Form> enveloppe tout le contenu du formulaire 🎯 */}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          
           <CardContent className="grid gap-4">
             <FormField
               control={form.control}
@@ -139,7 +141,6 @@ export const SignInForm = () => {
               Se connecter
             </Button>
           </CardFooter>
-
         </form>
       </Form>
     </Card>
