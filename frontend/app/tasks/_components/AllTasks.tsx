@@ -1,12 +1,7 @@
-// Fichier : AllTasks.tsx (Nettoyé)
-
 'use client';
 
+import { useState } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-
-// ❌ SUPPRESSION: useAuthContext n'est plus importé
-// import { useAuthContext } from '@/context/AuthContext';
-
 import { getTaskLists, deleteTask } from '@/actions/taskActions';
 import NewTaskForm from './NewTaskForm';
 import NewTaskListForm from './NewTaskListForm';
@@ -31,14 +26,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, ListTodo, Trash2 } from 'lucide-react';
 
-// ✅ MODIFICATION : Le composant reçoit l'utilisateur en prop
+
 export default function AllTasks({ user }: { user: { id: string } | null }) {
   const queryClient = useQueryClient();
-  // ❌ SUPPRESSION: Plus besoin de lire user et loading depuis le contexte
-  // const { user, loading } = useAuthContext();
-
-  // ⚠️ La variable loading sera maintenant toujours 'false' ici car c'est un composant client qui reçoit user.
-  // Nous utiliserons uniquement tasksLoading et listsLoading.
+   const [isNewTaskSheetOpen, setIsNewTaskSheetOpen] = useState(false);
+   const [isNewListSheetOpen, setIsNewListSheetOpen] = useState(false);
 
   const [
     { data: tasks = [], isLoading: tasksLoading, isError: tasksError },
@@ -99,7 +91,7 @@ export default function AllTasks({ user }: { user: { id: string } | null }) {
   return (
     <>
       <div className="flex justify-end gap-2 mb-4">
-        <Sheet>
+        <Sheet open={isNewListSheetOpen} onOpenChange={setIsNewListSheetOpen}>
           <SheetTrigger asChild>
             <Button
               variant="outline"
@@ -113,10 +105,10 @@ export default function AllTasks({ user }: { user: { id: string } | null }) {
             <SheetHeader>
               <SheetTitle>Nouvelle liste</SheetTitle>
             </SheetHeader>
-            <NewTaskListForm />
+            <NewTaskListForm onClose={() => setIsNewListSheetOpen(false)} />
           </SheetContent>
         </Sheet>
-        <Sheet>
+        <Sheet open={isNewTaskSheetOpen} onOpenChange={setIsNewTaskSheetOpen}>
           <SheetTrigger asChild>
             <Button aria-label="Créer une nouvelle tâche">
               <Plus className="h-4 w-4 mr-2" />
@@ -124,7 +116,13 @@ export default function AllTasks({ user }: { user: { id: string } | null }) {
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="sm:max-w-md">
-            <NewTaskForm taskLists={taskLists} />
+            <SheetHeader>
+              <SheetTitle>Créer une nouvelle tâche</SheetTitle>
+            </SheetHeader>
+            <NewTaskForm
+              taskLists={taskLists}
+              onClose={() => setIsNewTaskSheetOpen(false)}
+            />
           </SheetContent>
         </Sheet>
       </div>

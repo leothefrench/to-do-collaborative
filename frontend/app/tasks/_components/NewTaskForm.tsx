@@ -19,14 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 import { createTask } from '@/actions/taskActions';
-
-type TaskList = {
-  id: string;
-  name: string;
-};
-
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Le titre est requis.'),
@@ -40,27 +33,27 @@ const taskSchema = z.object({
 type TaskFormValues = z.infer<typeof taskSchema>;
 
 type NewTaskFormProps = {
-  taskLists: TaskList[];
+  taskLists: any[];
+  onClose: () => void;
 };
 
-export default function NewTaskForm({ taskLists }: NewTaskFormProps) {
+export default function NewTaskForm({ taskLists, onClose }: NewTaskFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
 
-const form = useForm<TaskFormValues>({
-  resolver: zodResolver(taskSchema),
-  defaultValues: {
-    title: '',
-    description: '',
-    status: 'TODO',
-    priority: 'MEDIUM',
-    dueDate: '',
-    taskListId: '',
-  },
-});
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      status: 'TODO',
+      priority: 'MEDIUM',
+      dueDate: '',
+      taskListId: '',
+    },
+  });
 
-  // 🟢 MODIFICATION : useMutation pour appeler la Server Action et gérer les états asynchrones
   const { mutate, isPending: isMutating } = useMutation({
     mutationFn: async (data: TaskFormValues) => {
       const formData = new FormData();
@@ -83,13 +76,13 @@ const form = useForm<TaskFormValues>({
       });
       toast.success('Tâche créée avec succès !');
       form.reset();
+      onClose();
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
-  // 🟢 MODIFICATION : onSubmit appelle la fonction `mutate` du hook `useMutation`
   const onSubmit = (data: TaskFormValues) => {
     const formattedData = {
       ...data,
@@ -104,7 +97,7 @@ const form = useForm<TaskFormValues>({
         <SheetTitle>Créer une nouvelle tâche</SheetTitle>
       </SheetHeader>
 
-      {/* 🟢 MODIFICATION : Le formulaire utilise onSubmit de react-hook-form */}
+
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-4 mt-4"
@@ -112,7 +105,7 @@ const form = useForm<TaskFormValues>({
       >
         <div className="flex flex-col gap-2">
           <Label htmlFor="taskListId">Liste</Label>
-          {/* 🟢 MODIFICATION : Le Select utilise onValueChange pour la gestion de l'état */}
+
           <Select
             onValueChange={(value) => form.setValue('taskListId', value)}
             defaultValue={form.getValues('taskListId')}
@@ -137,7 +130,7 @@ const form = useForm<TaskFormValues>({
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="title">Titre</Label>
-          {/* 🟢 MODIFICATION : L'Input utilise la fonction register */}
+    
           <Input
             id="title"
             placeholder="Entrez un titre"
@@ -152,7 +145,7 @@ const form = useForm<TaskFormValues>({
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="description">Description</Label>
-          {/* 🟢 MODIFICATION : Le Textarea utilise la fonction register */}
+    
           <Textarea
             id="description"
             placeholder="Détails de la tâche"
@@ -162,7 +155,7 @@ const form = useForm<TaskFormValues>({
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="status">Statut</Label>
-          {/* 🟢 MODIFICATION : Le Select utilise onValueChange */}
+     
           <Select
             onValueChange={(value) =>
               form.setValue('status', value as 'TODO' | 'IN_PROGRESS' | 'DONE')

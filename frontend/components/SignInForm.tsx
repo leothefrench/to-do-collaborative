@@ -1,15 +1,11 @@
-// Fichier : components/SignInForm.tsx (Correction finale)
-
 'use client';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react'; // ❌ SUPPRESSION: Retrait de useEffect et useState dépendants du contexte
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-// ❌ SUPPRESSION: On retire l'ancien contexte d'authentification
-// import { useAuthContext } from '@/context/AuthContext';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
 import {
   Card,
@@ -50,20 +46,9 @@ export const SignInForm = () => {
     },
   });
 
-  // ❌ SUPPRESSION: On retire la destructuration du contexte
-  // const { login, user } = useAuthContext();
-
-  // ❌ SUPPRESSION: On retire la règle de redirection côté client
-  /*
-  useEffect(() => {
-    if (user) {
-      router.push('/');
-    }
-  }, [user, router]);
-  */
-
   const onSubmit = async (values: SignInFormValues) => {
     setIsLoading(true);
+
     try {
       const response = await fetch('http://localhost:3001/auth/login', {
         method: 'POST',
@@ -76,20 +61,18 @@ export const SignInForm = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur de connexion');
+        const errorMessage = errorData.message || 'Erreur de connexion';
+
+        toast.error(errorMessage);
+        return;
       }
 
-      // Le serveur Fastify a défini le cookie 'token' ici
-
-      // ❌ SUPPRESSION: On n'appelle plus login() du contexte
-      // await login();
-
-      // Redirection après succès
       router.push('/tasks');
-      router.refresh(); // Force la revalidation du cache (et du Header SC)
+      router.refresh();
       form.reset();
     } catch (error) {
-      console.error('Erreur lors de la connexion :', error);
+      console.error('Erreur réseau inattendue :', error);
+      toast.error('Erreur de connexion : le serveur est injoignable.');
     } finally {
       setIsLoading(false);
     }

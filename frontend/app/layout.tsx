@@ -30,7 +30,7 @@ export default function RootLayout({
           <ClientProviders>
             <div>
               <Header />
-              {/* <Toaster richColors position="top-right" /> */}
+              <Toaster richColors position="top-right" />
               <>{children}</>
             </div>
           </ClientProviders>
