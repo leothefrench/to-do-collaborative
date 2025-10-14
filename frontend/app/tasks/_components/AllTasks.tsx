@@ -1,18 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { getTaskLists, deleteTask } from '@/actions/taskActions';
-import NewTaskForm from './NewTaskForm';
-import NewTaskListForm from './NewTaskListForm';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,13 +14,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Plus, ListTodo, Trash2 } from 'lucide-react';
-
+import { Trash2 } from 'lucide-react';
 
 export default function AllTasks({ user }: { user: { id: string } | null }) {
   const queryClient = useQueryClient();
-   const [isNewTaskSheetOpen, setIsNewTaskSheetOpen] = useState(false);
-   const [isNewListSheetOpen, setIsNewListSheetOpen] = useState(false);
 
   const [
     { data: tasks = [], isLoading: tasksLoading, isError: tasksError },
@@ -90,42 +77,8 @@ export default function AllTasks({ user }: { user: { id: string } | null }) {
 
   return (
     <>
-      <div className="flex justify-end gap-2 mb-4">
-        <Sheet open={isNewListSheetOpen} onOpenChange={setIsNewListSheetOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              aria-label="Créer une nouvelle liste de tâches"
-            >
-              <ListTodo className="h-4 w-4 mr-2" />
-              Nouvelle liste
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="sm:max-w-md">
-            <SheetHeader>
-              <SheetTitle>Nouvelle liste</SheetTitle>
-            </SheetHeader>
-            <NewTaskListForm onClose={() => setIsNewListSheetOpen(false)} />
-          </SheetContent>
-        </Sheet>
-        <Sheet open={isNewTaskSheetOpen} onOpenChange={setIsNewTaskSheetOpen}>
-          <SheetTrigger asChild>
-            <Button aria-label="Créer une nouvelle tâche">
-              <Plus className="h-4 w-4 mr-2" />
-              Nouvelle tâche
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="sm:max-w-md">
-            <SheetHeader>
-              <SheetTitle>Créer une nouvelle tâche</SheetTitle>
-            </SheetHeader>
-            <NewTaskForm
-              taskLists={taskLists}
-              onClose={() => setIsNewTaskSheetOpen(false)}
-            />
-          </SheetContent>
-        </Sheet>
-      </div>
+      {/* L'ancienne div des boutons a été supprimée */}
+
       {tasks.length === 0 ? (
         <p>Aucune tâche pour le moment.</p>
       ) : (
