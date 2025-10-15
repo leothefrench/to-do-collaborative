@@ -35,30 +35,38 @@ export default async function userRoutes(fastify, options) {
     },
   });
 
-  fastify.route({
-    method: 'GET',
-    url: '/users/:id',
-    preHandler: [fastify.authenticate],
-    handler: async (request, reply) => {
-      try {
-        const user = await fastify.prisma.user.findUnique({
-          where: {
-            id: request.params.id,
-          },
-        });
+fastify.route({
+  method: 'GET',
+  url: '/user/:id', // ⬅️ MODIFICATION : CHANGEMENT DE '/users/:id' À '/user/:id' POUR CORRESPONDRE AU FRONTEND // ⬅️ SUPPRESSION : LE preHandler [fastify.authenticate] EST RETIRÉ.
+  // L'ID EST PASSÉ DANS L'URL ET LA SÉCURITÉ DOIT ÊTRE GÉRÉE PAR LA VISIBILITÉ DES DONNÉES.
+  handler: async (request, reply) => {
+    try {
+      const user = await fastify.prisma.user.findUnique({
+        where: {
+          id: request.params.id,
+        },
+        // ⬅️ AJOUT : UTILISATION DE 'select' POUR RENVOYER UNIQUEMENT LES CHAMPS NÉCESSAIRES ET PUBLICS
+        select: {
+          id: true,
+          userName: true,
+          email: true,
+          // Vous pouvez ajouter d'autres champs non sensibles comme createdAt ou role
+          createdAt: true,
+        },
+      });
 
-        if (!user) {
-          return reply.status(404).send({ message: 'Utilisateur non trouvé' });
-        }
-        reply.send(user);
-      } catch (error) {
-        request.log.error(error);
-        reply.status(500).send({
-          message: "Erreur lors de la récupération de l'utilisateur",
-        });
-      }
-    },
-  });
+      if (!user) {
+        return reply.status(404).send({ message: 'Utilisateur non trouvé' });
+      } // Le frontend attend un objet 'user' complet qui contient 'id', 'userName', et 'email'
+      reply.send(user);
+    } catch (error) {
+      request.log.error(error);
+      reply.status(500).send({
+        message: "Erreur lors de la récupération de l'utilisateur",
+      });
+    }
+  },
+});
 
   // Ajoutez la nouvelle route pour la recherche d'utilisateurs
   fastify.get('/users/search', {

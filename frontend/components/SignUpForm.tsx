@@ -1,16 +1,12 @@
-// Fichier : components/SignUpForm.tsx (Correction finale)
-
 'use client';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react'; // ❌ SUPPRESSION: Retrait de useEffect et useState dépendants du contexte
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-// ❌ SUPPRESSION: On retire l'ancien contexte d'authentification
-// import { useAuthContext } from '@/context/AuthContext';
 import { Button } from './ui/button';
 import {
   Card,
@@ -32,13 +28,11 @@ import {
 
 const signUpFormSchema = z
   .object({
-    name: z.string().min(2, { message: 'Le nom est requis' }),
+    userName: z.string().min(2, { message: 'Le nom d’utilisateur est requis' }),
     email: z.string().email({ message: 'Email invalide' }),
-    password: z
-      .string()
-      .min(6, {
-        message: 'Le mot de passe doit contenir au moins 6 caractères',
-      }),
+    password: z.string().min(6, {
+      message: 'Le mot de passe doit contenir au moins 6 caractères',
+    }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -55,25 +49,14 @@ export const SignUpForm = () => {
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpFormSchema),
     defaultValues: {
-      name: '',
+      userName: '',
       email: '',
       password: '',
       confirmPassword: '',
     },
   });
 
-  // ❌ SUPPRESSION: On retire la destructuration du contexte
-  // const { login, user } = useAuthContext();
-
-  // ❌ SUPPRESSION: On retire la règle de redirection côté client
-  /*
-  useEffect(() => {
-    if (user) {
-      router.push('/');
-    }
-  }, [user, router]);
-  */
-
+ 
   const onSubmit = async (values: SignUpFormValues) => {
     setIsLoading(true);
     // On retire le confirmPassword avant d'envoyer au backend
@@ -94,12 +77,6 @@ export const SignUpForm = () => {
         throw new Error(errorData.message || "Erreur d'inscription");
       }
 
-      // Le serveur Fastify a défini le cookie 'token' ici (si c'est le comportement)
-
-      // ❌ SUPPRESSION: On n'appelle plus login() du contexte
-      // await login();
-
-      // Redirection après succès. Le router.refresh() force la revalidation.
       router.push('/tasks');
       router.refresh();
       form.reset();
@@ -122,9 +99,9 @@ export const SignUpForm = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <CardContent className="grid gap-4">
-            <FormField
+            <FormField<SignUpFormValues>
               control={form.control}
-              name="name"
+              name="userName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nom</FormLabel>
@@ -136,7 +113,7 @@ export const SignUpForm = () => {
               )}
             />
 
-            <FormField
+            <FormField<SignUpFormValues>
               control={form.control}
               name="email"
               render={({ field }) => (
@@ -150,7 +127,7 @@ export const SignUpForm = () => {
               )}
             />
 
-            <FormField
+            <FormField<SignUpFormValues>
               control={form.control}
               name="password"
               render={({ field }) => (
@@ -164,7 +141,7 @@ export const SignUpForm = () => {
               )}
             />
 
-            <FormField
+            <FormField<SignUpFormValues>
               control={form.control}
               name="confirmPassword"
               render={({ field }) => (
