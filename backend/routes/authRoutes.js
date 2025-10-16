@@ -1,5 +1,9 @@
 import bcrypt from 'bcrypt';
-import { registerSchema, loginSchema } from '../schemas/userSchemas.js';
+import {
+  registerSchema,
+  loginSchema,
+  changePasswordSchema,
+} from '../schemas/userSchemas.js';
 
 export default async function (fastify, option) {
   fastify.route({
@@ -120,4 +124,50 @@ export default async function (fastify, option) {
       };
     }
   );
+
+  fastify.route({
+    method: 'POST',
+    url: '/change-password',
+    schema: changePasswordSchema, // SCHÉMA À CRÉER POUR VALIDER oldPassword et newPassword
+    preHandler: [fastify.authenticate], // SÉCURITÉ : SEUL L'UTILISATEUR CONNECTÉ PEUT ACCÉDER
+    handler: async (request, reply) => {
+      try {
+        const { oldPassword, newPassword } = request.body; // request.user EST DISPONIBLE GRÂCE À fastify.authenticate
+        const userId = request.user.userId; // 1. RÉCUPÉRER L'UTILISATEUR COMPLET (AVEC LE MOT DE PASSE HACHÉ)
+
+        const user = await fastify.prisma.user.findUnique({
+          where: { id: userId },
+        });
+
+        if (!user) {
+          // CAS IMPOSSIBLE SI AUTHENTICATE A FONCTIONNÉ, MAIS BONNE PRATIQUE
+          return reply.status(404).send({ message: 'Utilisateur non trouvé' });
+        } // 2. VÉRIFIER L'ANCIEN MOT DE PASSE
+
+        const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+
+        if (!passwordMatch) {
+          return reply
+            .status(401)
+            .send({ message: "L'ancien mot de passe est incorrect." });
+        } // 3. HASHER LE NOUVEAU MOT DE PASSE
+
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10); // 4. METTRE À JOUR LE MOT DE PASSE DANS PRISMA
+
+        await fastify.prisma.user.update({
+          where: { id: userId },
+          data: { password: hashedNewPassword },
+        });
+
+        reply
+          .status(200)
+          .send({ message: 'Mot de passe mis à jour avec succès.' });
+      } catch (error) {
+        request.log.error(error);
+        reply
+          .status(500)
+          .send({ message: 'Erreur lors du changement de mot de passe.' });
+      }
+    },
+  });
 }

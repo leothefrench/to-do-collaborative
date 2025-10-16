@@ -20,3 +20,22 @@ export const loginSchema = {
     },
   },
 };
+
+export const changePasswordSchema = {
+  body: {
+    type: 'object',
+    required: ['oldPassword', 'newPassword'],
+    properties: {
+      oldPassword: { type: 'string' },
+      newPassword: { type: 'string', minLength: 8 },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+      },
+    },
+  },
+};

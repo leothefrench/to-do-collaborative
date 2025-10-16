@@ -9,7 +9,8 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, User, Shield, Lock, CreditCard } from 'lucide-react';
+import { Mail, User, Shield, CreditCard } from 'lucide-react';
+import { ChangePasswordDialog } from './_components/ChangePasswordDialog';
 
 interface FullUser {
   id: string;
@@ -17,7 +18,6 @@ interface FullUser {
   email: string;
 }
 
-// FONCTION POUR RÉCUPÉRER LE PROFIL COMPLET DEPUIS LE BACKEND
 async function fetchFullUserProfile(userId: string): Promise<FullUser | null> {
   const API_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
@@ -42,10 +42,9 @@ async function fetchFullUserProfile(userId: string): Promise<FullUser | null> {
 }
 
 export default async function ProfilePage() {
-  // 1. RÉCUPÉRATION DU PAYLOAD JWT (CONTENANT SEULEMENT userId)
   const jwtPayload = await getAuthUser();
 
-  if (!jwtPayload || !jwtPayload.userId) {
+  if (!jwtPayload || typeof jwtPayload.userId !== 'string') {
     return (
       <div className="container mx-auto p-4 max-w-2xl text-center">
         <h1 className="text-2xl font-bold mb-4">Accès Refusé</h1>
@@ -54,8 +53,9 @@ export default async function ProfilePage() {
     );
   }
 
-  // 2. APPEL POUR RÉCUPÉRER LES DONNÉES COMPLÈTES DE L'UTILISATEUR
-  const fullUser = await fetchFullUserProfile(jwtPayload.userId);
+  const userId = jwtPayload.userId;
+
+  const fullUser = await fetchFullUserProfile(userId);
 
   if (!fullUser) {
     return (
@@ -65,8 +65,6 @@ export default async function ProfilePage() {
     );
   }
 
-  // 3. AFFICHAGE UTILISANT LES DONNÉES COMPLÈTES (fullUser)
-
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2 text-gray-800">
@@ -74,7 +72,6 @@ export default async function ProfilePage() {
       </h1>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* 1. SECTION: INFORMATIONS DU COMPTE (CARD) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -85,7 +82,6 @@ export default async function ProfilePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {/* AFFICHAGE DU NOM D'UTILISATEUR */}
             <div className="flex items-center justify-between border-b pb-2">
               <strong className="text-sm text-gray-600">
                 Nom d'utilisateur :
@@ -93,7 +89,6 @@ export default async function ProfilePage() {
               <span className="font-medium text-sm">{fullUser.userName}</span>
             </div>
 
-            {/* AFFICHAGE DE L'EMAIL */}
             <div className="flex items-center justify-between border-b pb-2">
               <strong className="text-sm text-gray-600">Email :</strong>
               <span className="font-medium text-sm">
@@ -101,7 +96,6 @@ export default async function ProfilePage() {
               </span>
             </div>
 
-            {/* AFFICHAGE DE L'ID */}
             <div className="flex items-center justify-between">
               <strong className="text-sm text-gray-600">ID Unique :</strong>
               <span className="text-xs text-gray-500">{fullUser.id}</span>
@@ -109,7 +103,6 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* 2. SECTION: SÉCURITÉ ET ACCÈS (CARD) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -120,9 +113,7 @@ export default async function ProfilePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full">
-              <Lock className="h-4 w-4 mr-2" /> Changer le mot de passe
-            </Button>
+            <ChangePasswordDialog />
           </CardContent>
           <CardFooter>
             <Button variant="destructive" className="w-full" disabled>
@@ -131,7 +122,6 @@ export default async function ProfilePage() {
           </CardFooter>
         </Card>
 
-        {/* 3. SECTION: ABONNEMENT (CARD - Préparation Stripe) */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -150,13 +140,11 @@ export default async function ProfilePage() {
                 Accès aux fonctionnalités de base.
               </p>
             </div>
-            {/* Ce bouton sera le point d'entrée vers le portail Stripe */}
             <Button variant="default">Mettre à niveau vers Pro</Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* 4. SECTION: DÉCONNEXION (Gardé en bas pour la clarté) */}
       <div className="mt-10 pt-4 border-t border-gray-100 flex justify-end">
         <LogoutButton />
       </div>
