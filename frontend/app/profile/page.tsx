@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Mail, User, Shield, CreditCard } from 'lucide-react';
 import { ChangePasswordDialog } from './_components/ChangePasswordDialog';
+import { DeleteAccountDialog } from './_components/DeleteAccountDialog';
 
 interface FullUser {
   id: string;
@@ -116,9 +117,7 @@ export default async function ProfilePage() {
             <ChangePasswordDialog />
           </CardContent>
           <CardFooter>
-            <Button variant="destructive" className="w-full" disabled>
-              Supprimer mon compte (À implémenter)
-            </Button>
+            <DeleteAccountDialog />
           </CardFooter>
         </Card>
 

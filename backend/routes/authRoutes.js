@@ -170,4 +170,28 @@ export default async function (fastify, option) {
       }
     },
   });
+  fastify.route({
+    method: 'DELETE', // ⬅️ Le verbe DELETE
+    url: '/account', // ⬅️ La route sera /auth/account
+    preHandler: [fastify.authenticate], // ⬅️ SÉCURITÉ : Vérifie la connexion via le JWT/Cookie
+    handler: async (request, reply) => {
+      try {
+        // 1. Récupération de l'ID utilisateur à partir du JWT décodé
+        const userId = request.user.userId; // 2. Suppression de l'utilisateur (et de toutes les données liées si configuré en cascade dans Prisma)
+
+        await fastify.prisma.user.delete({
+          where: { id: userId },
+        }); // 3. Déconnexion : Effacer le cookie côté serveur
+
+        reply.clearCookie('token', { path: '/' }); // 4. Succès : Répondre avec 204 No Content (standard pour DELETE)
+
+        reply.status(204).send();
+      } catch (error) {
+        request.log.error(error);
+        reply
+          .status(500)
+          .send({ message: 'Erreur lors de la suppression du compte.' });
+      }
+    },
+  });
 }

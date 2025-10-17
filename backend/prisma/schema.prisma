@@ -24,22 +24,22 @@ model TaskList {
   name String
   description String?
   ownerId String 
-  owner User @relation(fields: [ownerId], references: [id])
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   sharedWithUsers  TaskListShare[]
   tasks       Task[] 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Task {
+model Task {    
   id String @id @default(uuid())
   title String
   description String?
   status State
   dueDate DateTime?
   priority Priority
-  taskListId String  
-  taskList TaskList @relation(fields: [taskListId], references: [id])
+  taskListId String  
+  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -58,9 +58,11 @@ enum Priority  {
 
 model TaskListShare {
   id String @id @default(uuid())
-  taskListShare TaskList @relation(fields: [taskListId], references: [id])
+  // 1. Si la liste est supprimée, l'enregistrement de partage est supprimé.
+  taskListShare TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
   taskListId String
-  user User @relation(fields: [userId], references: [id])
+  // 2. Si l'utilisateur est supprimé, l'enregistrement de partage le concernant est supprimé.
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
   permissionLevel PermissionLevel
   sharedAt DateTime @default(now())
