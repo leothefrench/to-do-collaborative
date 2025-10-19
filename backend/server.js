@@ -1,13 +1,12 @@
-// Fichier : backend/server.js
-
 import Fastify from 'fastify';
 import fastifyJwt from '@fastify/jwt';
-// ❌ Suppression de fastifyEnv
 import prismaPlugin from './plugins/prisma.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import taskListRoutes from './routes/tasklistRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
+import stripePlugin from './plugins/stripe.js';
+import billingRoutes from './routes/billingRoutes.js';
 import cors from '@fastify/cors';
 import fastifyCookie from '@fastify/cookie';
 
@@ -19,7 +18,7 @@ import * as dotenv from 'dotenv';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 🚨 CORRECTION CRITIQUE : Chargement du fichier .env qui est dans le dossier backend
+// Chargement du fichier .env qui est dans le dossier backend
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const fastify = Fastify({ logger: true });
@@ -76,10 +75,12 @@ fastify.register(async (instance, opts) => {
   });
 
   instance.register(prismaPlugin);
+  instance.register(stripePlugin);
   instance.register(authRoutes, { prefix: '/auth' });
   instance.register(userRoutes);
   instance.register(taskListRoutes);
   instance.register(taskRoutes);
+  instance.register(billingRoutes);
 
   // Declaration Route
   instance.get('/', async function (request, reply) {
