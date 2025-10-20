@@ -8,10 +8,10 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Mail, User, Shield, CreditCard } from 'lucide-react';
 import { ChangePasswordDialog } from './_components/ChangePasswordDialog';
 import { DeleteAccountDialog } from './_components/DeleteAccountDialog';
+import { SubscribeButton } from './_components/SubscribeButton';
 
 interface FullUser {
   id: string;
@@ -139,7 +139,7 @@ export default async function ProfilePage() {
                 Accès aux fonctionnalités de base.
               </p>
             </div>
-            <Button variant="default">Mettre à niveau vers Pro</Button>
+            <SubscribeButton />
           </CardContent>
         </Card>
       </div>
