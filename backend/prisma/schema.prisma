@@ -13,10 +13,17 @@ model User {
   userName String @unique 
   email String @unique
   password String
+  plan                  Plan        @default(FREE)
+  stripeSubscriptionId  String?     @unique
   ownedTaskLists TaskList[] 
   sharedTaskLists TaskListShare[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum Plan {
+  FREE
+  PREMIUM
 }
 
 model TaskList {

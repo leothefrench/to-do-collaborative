@@ -7,6 +7,7 @@ import taskListRoutes from './routes/tasklistRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import stripePlugin from './plugins/stripe.js';
 import billingRoutes from './routes/billingRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
 import cors from '@fastify/cors';
 import fastifyCookie from '@fastify/cookie';
 
@@ -81,6 +82,7 @@ fastify.register(async (instance, opts) => {
   instance.register(taskListRoutes);
   instance.register(taskRoutes);
   instance.register(billingRoutes);
+  instance.register(webhookRoutes);
 
   // Declaration Route
   instance.get('/', async function (request, reply) {
@@ -90,8 +92,10 @@ fastify.register(async (instance, opts) => {
 
 // Run Server
 try {
-  await fastify.listen({ port: 3001 });
+  const address = await fastify.listen({ port: 3001, host: '0.0.0.0' }); // ⬅️ AJOUTEZ host: '0.0.0.0'
+  fastify.log.info(`Server listening at ${address}`);
 } catch (err) {
   fastify.log.error(err);
   process.exit(1);
 }
+
