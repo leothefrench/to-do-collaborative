@@ -48,7 +48,8 @@ export default async function billingRoutes(fastify, options) {
           ],
 
           // Redirections après paiement (Stripe renvoie ici)
-          success_url: `${FRONTEND_URL}/profile?payment=success`,
+          // success_url: `${FRONTEND_URL}/profile?payment=success`,
+          success_url: `${FRONTEND_URL}/tasks?payment=success`,
           cancel_url: `${FRONTEND_URL}/profile?payment=cancelled`,
 
           // Métadonnées importantes pour le Webhook (Étape 2)

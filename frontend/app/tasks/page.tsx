@@ -6,6 +6,7 @@ import MobileSidebar from './_components/MobileSidebar';
 import { getAuthUser } from '@/lib/auth';
 import SidebarButtons from './_components/SidebarButtons';
 import { getTaskLists as getListsAction } from '@/actions/taskActions';
+import PaymentNotification from './_components/PaymentNotification';
 
 const NavLinks = () => (
   <nav aria-label="Navigation principale">
@@ -43,6 +44,7 @@ export default async function TasksPage() {
       </aside>
       <MobileSidebar />
       <main className="flex-1 p-6">
+        <PaymentNotification />
         <h1 className="text-2xl font-bold mb-4">Tableau de tâches</h1>
         <AllTasks user={user} />
       </main>
