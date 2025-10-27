@@ -1,8 +1,5 @@
-// Fichier : frontend/lib/schemas/authSchemas.ts (ou similaire)
-
 import * as z from 'zod';
 
-// Schéma pour le formulaire de changement de mot de passe
 export const ChangePasswordSchema = z
   .object({
     // Le nom des champs doit correspondre à ce que Fastify attend (oldPassword, newPassword)

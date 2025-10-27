@@ -10,6 +10,7 @@ import billingRoutes from './routes/billingRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import cors from '@fastify/cors';
 import fastifyCookie from '@fastify/cookie';
+import tasklistShareRoutes from './routes/tasklistShareRoutes.js';
 
 // ⚠️ NOUVEAU : Imports pour le chargement manuel du .env
 import path from 'path';
@@ -83,6 +84,7 @@ fastify.register(async (instance, opts) => {
   instance.register(taskRoutes);
   instance.register(billingRoutes);
   instance.register(webhookRoutes);
+  instance.register(tasklistShareRoutes);
 
   // Declaration Route
   instance.get('/', async function (request, reply) {

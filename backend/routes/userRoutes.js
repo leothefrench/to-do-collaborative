@@ -116,6 +116,47 @@ fastify.route({
   },
   });
 
+fastify.route({
+  method: 'GET',
+  url: '/users/me',
+  preHandler: [fastify.authenticate],
+  handler: async (request, reply) => {
+    try {
+      // CORRECTION : Accède au payload du JWT qui est stocké dans request.user par le hook authenticate.
+      // Le payload contient le champ 'userId'.
+      const userId = request.user.userId;
+
+      // SÉCURITÉ : Vérification de l'existence de l'ID
+      if (!userId) {
+        return reply
+          .status(401)
+          .send({ message: 'Token invalide ou ID utilisateur manquant.' });
+      }
+
+      const user = await fastify.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          userName: true,
+          plan: true,
+          premiumTrialActivatedAt: true,
+        },
+      });
+
+      if (!user) {
+        return reply.status(404).send({ message: 'Utilisateur non trouvé' });
+      }
+      reply.send(user);
+    } catch (error) {
+      request.log.error(error);
+      reply.status(500).send({
+        message: "Erreur lors de la récupération des données de l'utilisateur",
+      });
+    }
+  },
+});
+
   fastify.route({
     method: 'PUT',
     url: '/users/:id',

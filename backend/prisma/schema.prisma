@@ -15,6 +15,7 @@ model User {
   password String
   plan                  Plan        @default(FREE)
   stripeSubscriptionId  String?     @unique
+  premiumTrialActivatedAt DateTime?
   ownedTaskLists TaskList[] 
   sharedTaskLists TaskListShare[]
   createdAt DateTime @default(now())

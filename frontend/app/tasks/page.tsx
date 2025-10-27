@@ -14,7 +14,7 @@ const NavLinks = () => (
       <li>
         <Link href="/tasks" className="flex items-center gap-2 hover:underline">
           <LayoutDashboard className="h-5 w-5" />
-          Dashboard
+          Toutes les tâches
         </Link>
       </li>
       <li>
@@ -32,6 +32,7 @@ const NavLinks = () => (
 
 export default async function TasksPage() {
   const user = await getAuthUser();
+  console.log(user);
 
   const taskLists = await getListsAction();
 
@@ -40,12 +41,12 @@ export default async function TasksPage() {
       <aside className="hidden md:flex w-64 flex-col border-r p-4 bg-background">
         <h2 className="text-xl font-semibold mb-6">Mes projets</h2>
         <NavLinks />
-        <SidebarButtons taskLists={taskLists} />
+        <SidebarButtons taskLists={taskLists} user={user} />
       </aside>
       <MobileSidebar />
       <main className="flex-1 p-6">
         <PaymentNotification />
-        <h1 className="text-2xl font-bold mb-4">Tableau de tâches</h1>
+        <h1 className="text-2xl font-bold mb-4">Toutes les tâches</h1>
         <AllTasks user={user} />
       </main>
     </div>

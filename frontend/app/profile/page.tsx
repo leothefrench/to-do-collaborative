@@ -1,4 +1,4 @@
-import { getAuthUser } from '@/lib/auth';
+import { getAuthUser, UserPayload } from '@/lib/auth';
 import LogoutButton from './_components/LogoutButton';
 import {
   Card,
@@ -13,39 +13,10 @@ import { ChangePasswordDialog } from './_components/ChangePasswordDialog';
 import { DeleteAccountDialog } from './_components/DeleteAccountDialog';
 import { SubscribeButton } from './_components/SubscribeButton';
 
-interface FullUser {
-  id: string;
-  userName: string;
-  email: string;
-}
-
-async function fetchFullUserProfile(userId: string): Promise<FullUser | null> {
-  const API_URL =
-    process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-
-  const response = await fetch(`${API_URL}/user/${userId}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    console.error(
-      'Erreur lors de la récupération du profil utilisateur complet'
-    );
-    return null;
-  }
-
-  return response.json();
-}
-
 export default async function ProfilePage() {
-  const jwtPayload = await getAuthUser();
+  const user: UserPayload = await getAuthUser();
 
-  if (!jwtPayload || typeof jwtPayload.userId !== 'string') {
+  if (!user || typeof user.id !== 'string') {
     return (
       <div className="container mx-auto p-4 max-w-2xl text-center">
         <h1 className="text-2xl font-bold mb-4">Accès Refusé</h1>
@@ -54,24 +25,13 @@ export default async function ProfilePage() {
     );
   }
 
-  const userId = jwtPayload.userId;
-
-  const fullUser = await fetchFullUserProfile(userId);
-
-  if (!fullUser) {
-    return (
-      <p className="text-center mt-10 text-red-500">
-        Impossible de charger les données du profil.
-      </p>
-    );
-  }
+  const isPremium = user.plan === 'PREMIUM';
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2 text-gray-800">
         <User className="h-7 w-7 text-primary" /> Mon Profil
       </h1>
-
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -87,23 +47,20 @@ export default async function ProfilePage() {
               <strong className="text-sm text-gray-600">
                 Nom d'utilisateur :
               </strong>
-              <span className="font-medium text-sm">{fullUser.userName}</span>
+              <span className="font-medium text-sm">{user.userName}</span>
             </div>
-
             <div className="flex items-center justify-between border-b pb-2">
               <strong className="text-sm text-gray-600">Email :</strong>
               <span className="font-medium text-sm">
-                {fullUser.email || 'Non spécifié'}
+                {user.email || 'Non spécifié'}
               </span>
             </div>
-
             <div className="flex items-center justify-between">
               <strong className="text-sm text-gray-600">ID Unique :</strong>
-              <span className="text-xs text-gray-500">{fullUser.id}</span>
+              <span className="text-xs text-gray-500">{user.id}</span>
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -120,7 +77,6 @@ export default async function ProfilePage() {
             <DeleteAccountDialog />
           </CardFooter>
         </Card>
-
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -133,17 +89,21 @@ export default async function ProfilePage() {
           <CardContent className="flex items-center justify-between">
             <div>
               <p className="text-lg font-semibold">
-                Plan actuel : <span className="text-primary">Gratuit</span>
+                Plan actuel :{' '}
+                <span className="text-primary">
+                  {isPremium ? ' Premium' : ' Gratuit'}
+                </span>
               </p>
               <p className="text-sm text-muted-foreground">
-                Accès aux fonctionnalités de base.
+                {isPremium
+                  ? 'Accès à toutes les fonctionnalités de collaboration.'
+                  : 'Accès aux fonctionnalités de base.'}
               </p>
             </div>
-            <SubscribeButton />
+            {!isPremium && <SubscribeButton />}
           </CardContent>
         </Card>
       </div>
-
       <div className="mt-10 pt-4 border-t border-gray-100 flex justify-end">
         <LogoutButton />
       </div>
