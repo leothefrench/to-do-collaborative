@@ -33,9 +33,6 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// -----------------------------------------------------
-// 1. Server Action pour la création d'une tâche
-// -----------------------------------------------------
 export async function createTask(formData: FormData) {
   // ❌ Suppression de l'argument token
   const data = {
@@ -80,11 +77,8 @@ export async function createTask(formData: FormData) {
   }
 }
 
-// -----------------------------------------------------
-// 2. Server Action pour la suppression d'une tâche
-// -----------------------------------------------------
 export async function deleteTask(taskId: string) {
-  // ❌ Suppression de l'argument token
+
   try {
     const token = await getTokenFromCookie();
 
@@ -113,41 +107,37 @@ export async function deleteTask(taskId: string) {
     };
   }
 }
-
-// -----------------------------------------------------
-// 3. Server Action pour récupérer les listes de tâches
-// -----------------------------------------------------
 export async function getTaskLists() {
-  // ❌ Suppression de l'argument token
   try {
-    const token = await getTokenFromCookie(); 
-    const res = await fetch('http://localhost:3001/tasklists', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: 'no-store',
-    });
+    const token = await getTokenFromCookie();
+    
+    const res = await fetch(
+      'http://localhost:3001/tasklists',
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: 'no-store',
+      }
+    );
 
     if (!res.ok) {
       throw new Error('Failed to fetch task lists');
     }
 
     const taskLists = await res.json();
+    console.log("Données reçues pour les listes de tâches (vérification partage) :", taskLists);
     return taskLists;
   } catch (error) {
-    const errorMessage = toErrorMessage(error); 
-    console.error('getTaskLists error:', errorMessage);
+    const errorMessage = toErrorMessage(error);
+    console.error('getTaskLists error:', errorMessage); // Retourne un tableau vide en cas d'erreur pour ne pas casser l'interface
 
-    // Retourne un tableau vide en cas d'erreur pour ne pas casser l'interface
     return [];
   }
 }
 
-// -----------------------------------------------------
-// 4. Server Action pour la création d'une liste de tâches
-// -----------------------------------------------------
 export async function createTaskList(formData: FormData) {
-  // ❌ Suppression de l'argument token
+
   const data = Object.fromEntries(formData.entries());
 
   try {
@@ -173,12 +163,43 @@ export async function createTaskList(formData: FormData) {
     revalidatePath('/dashboard');
     return { success: true, message: 'Liste créée avec succès !' };
   } catch (error) {
-    const errorMessage = toErrorMessage(error); // ✅ Utilisation de toErrorMessage
+    const errorMessage = toErrorMessage(error); 
     console.error(
       'Erreur lors de la création de la liste de tâches :',
       errorMessage
     );
 
     return { success: false, message: errorMessage || 'Erreur inattendue.' };
+  }
+}
+
+export async function getTasksByTaskListId(taskListId: string) {
+  try {
+    const token = await getTokenFromCookie();
+    const res = await fetch(`${API_URL}/tasks?taskListId=${taskListId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      throw new Error('Échec de la récupération des tâches pour cette liste.');
+    }
+
+    const tasks = await res.json();
+
+    // ✅ AJOUT DE LA LIGNE DE DÉBOGAGE
+    console.log(
+      `IDs de tâches reçus pour la liste ${taskListId}:`,
+      tasks.map((t) => t.id)
+    );
+
+    return tasks;
+  } catch (error) {
+    const errorMessage = toErrorMessage(error);
+    console.error('getTasksByTaskListId error:', errorMessage); // Retourne un tableau vide en cas d'erreur
+
+    return [];
   }
 }

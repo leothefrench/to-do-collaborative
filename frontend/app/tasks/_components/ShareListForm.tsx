@@ -12,14 +12,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
+import { TaskList } from '../page'; 
+import { UserPayload } from '@/lib/auth';
 
 interface ShareFormProps {
-  taskLists: { id: string; name: string }[];
+  taskLists: TaskList[];
   onClose: () => void;
-  user: {
-    plan: 'FREE' | 'PREMIUM';
-    premiumTrialActivatedAt: string | null | Date;
-  };
+  user: UserPayload;
 }
 
 const ONE_MONTH_IN_MS = 30 * 24 * 60 * 60 * 1000;
@@ -46,6 +45,10 @@ export default function ShareListForm({
     : false;
   const isPremium = user.plan === 'PREMIUM';
 
+  const userOwnedTaskLists = taskLists.filter(
+    (list) => list.ownerId === user.id
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -57,7 +60,18 @@ export default function ShareListForm({
       });
       return;
     }
+    if (
+      user.userName &&
+      user.userName.toLowerCase() === collaboratorUserName.toLowerCase()
+    ) {
+      setMessage({
+        text: 'Vous ne pouvez pas partager une liste avec vous-même.',
+        type: 'error',
+      });
+      return;
+    }
 
+    // REMPLACER LE BLOC 'startTransition' COMPLET DANS ShareListForm.tsx
     startTransition(async () => {
       const result = await shareTaskListAction(
         selectedListId,
@@ -65,8 +79,8 @@ export default function ShareListForm({
       );
 
       if (result.success) {
-        setMessage({ text: result.message, type: 'success' });
-        if (!isPremium && !isTrialStarted) {
+        setMessage({ text: result.message, type: 'success' }); // Condition finale : Rafraîchir si l'essai vient d'être activé OU si l'utilisateur est déjà premium/en essai
+        if (result.trialActivated || isPremium || isTrialActive) {
           router.refresh();
         }
         setTimeout(onClose, 2000);
@@ -74,53 +88,70 @@ export default function ShareListForm({
         setMessage({ text: result.message, type: 'error' });
       }
     });
-  };
+  }; // FIN DE handleSubmit
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+           {' '}
       {!isPremium && user.plan === 'FREE' && (
         <div
           className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3"
           role="alert"
         >
+                   {' '}
           {isTrialStarted ? (
             <p className="text-sm font-medium">
-              Essai Premium actif ! Vous pouvez partager des listes pendant 30
-              jours (Limite : 5 invités).
+                            Essai Premium actif ! Vous pouvez partager des
+              listes pendant 30               jours (Limite : 5 invités).      
+                   {' '}
             </p>
           ) : (
             <p className="text-sm font-medium">
-              Ceci active votre **essai Premium gratuit de 30 jours** pour le
-              partage collaboratif !
+                            Ceci active votre **essai Premium gratuit de 30
+              jours** pour le               partage collaboratif !            {' '}
             </p>
           )}
+                 {' '}
         </div>
       )}
-
+           {' '}
       <div className="space-y-2">
-        <Label htmlFor="list-select">Liste à partager</Label>
+                <Label htmlFor="list-select">Liste à partager</Label>       {' '}
         <Select
           value={selectedListId}
           onValueChange={setSelectedListId}
           name="list-select"
         >
+                   {' '}
           <SelectTrigger>
-            <SelectValue placeholder="Sélectionnez une liste..." />
+                        <SelectValue placeholder="Sélectionnez une liste..." /> 
+                   {' '}
           </SelectTrigger>
+                   {' '}
           <SelectContent>
-            {taskLists.map((list) => (
-              <SelectItem key={list.id} value={list.id}>
-                {list.name}
-              </SelectItem>
-            ))}
+                       {' '}
+            {userOwnedTaskLists.map(
+              (
+                list // MODIFIÉ : Utilise la liste filtrée
+              ) => (
+                <SelectItem key={list.id} value={list.id}>
+                                  {list.name}             {' '}
+                </SelectItem>
+              )
+            )}
+                     {' '}
           </SelectContent>
+                 {' '}
         </Select>
+             {' '}
       </div>
-
+           {' '}
       <div className="space-y-2">
+               {' '}
         <Label htmlFor="collaborator-username">
-          Nom d'utilisateur du collaborateur
+                    Nom d'utilisateur du collaborateur        {' '}
         </Label>
+               {' '}
         <Input
           id="collaborator-username"
           type="text"
@@ -129,8 +160,9 @@ export default function ShareListForm({
           onChange={(e) => setCollaboratorUserName(e.target.value)}
           required
         />
+             {' '}
       </div>
-
+           {' '}
       {message && (
         <div
           className={`p-3 rounded text-sm ${
@@ -139,17 +171,19 @@ export default function ShareListForm({
               : 'bg-red-100 text-red-700'
           }`}
         >
-          {message.text}
+                    {message.text}       {' '}
         </div>
       )}
-
+           {' '}
       <Button
         type="submit"
         className="w-full"
         disabled={isPending || !collaboratorUserName || !selectedListId}
       >
-        {isPending ? 'Invitation en cours...' : 'Inviter le collaborateur'}
+               {' '}
+        {isPending ? 'Invitation en cours...' : 'Inviter le collaborateur'}     {' '}
       </Button>
+         {' '}
     </form>
   );
 }

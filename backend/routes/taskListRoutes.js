@@ -22,18 +22,53 @@ export default async function taskListRoutes(fastify, options) {
     },
   });
 
-  // 🔹 Récupérer toutes les listes de l’utilisateur
   fastify.route({
     method: 'GET',
     url: '/tasklists',
     preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
+        const userId = request.user.userId;
+
         const taskLists = await fastify.prisma.taskList.findMany({
           where: {
-            ownerId: request.user.userId, // ✅ filtre par utilisateur
+            OR: [
+              { ownerId: userId },
+              {
+                sharedWithUsers: {
+                  // MODIFIÉ : Utilise sharedWithUsers
+                  some: { userId: userId }, // MODIFIÉ : Vérifie le userId dans la table de jointure
+                },
+              },
+            ],
+          },
+          include: {
+            owner: {
+              select: {
+                id: true,
+                userName: true,
+              },
+            },
+            sharedWithUsers: {
+              // MODIFIÉ : Utilise sharedWithUsers
+              select: {
+                userId: true, // IMPORTANT : On sélectionne l'ID de l'utilisateur dans la table de jointure
+                permissionLevel: true, // AJOUTÉ : Pour récupérer le niveau de permission
+                user: {
+                  // AJOUTÉ : Pour inclure les détails de l'utilisateur réel
+                  select: {
+                    id: true,
+                    userName: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
           },
         });
+
         reply.status(200).send(taskLists);
       } catch (error) {
         request.log.error(error);
@@ -44,7 +79,6 @@ export default async function taskListRoutes(fastify, options) {
     },
   });
 
-  // 🔹 Récupérer une liste par ID
   fastify.route({
     method: 'GET',
     url: '/tasklists/:id',

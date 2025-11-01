@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Sheet,
   SheetContent,
@@ -9,29 +10,24 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { ListTodo, Plus, Users } from 'lucide-react';
-
-// Assurez-vous d'importer ces formulaires depuis leur emplacement réel
+import { ListTodo, Plus, Users, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { TaskList } from '../page';
+import { UserPayload } from '@/lib/auth';
 import NewTaskListForm from './NewTaskListForm';
 import NewTaskForm from './NewTaskForm';
 import ShareListForm from './ShareListForm';
 
-interface AuthUser {
-  plan: 'FREE' | 'PREMIUM';
-  premiumTrialActivatedAt: string | null | Date;
-}
-
 const ONE_MONTH_IN_MS = 30 * 24 * 60 * 60 * 1000;
 
-// Note : taskLists est passé en prop, récupéré côté serveur
 export default function SidebarButtons({
   taskLists,
   user,
 }: {
-  taskLists: any[];
-  user: AuthUser;
+  taskLists: TaskList[];
+  user: UserPayload;
 }) {
-  // État pour les deux dialogues (nécessaire pour la fermeture automatique)
+
   const [isNewTaskSheetOpen, setIsNewTaskSheetOpen] = useState(false);
   const [isNewListSheetOpen, setIsNewListSheetOpen] = useState(false);
   const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
@@ -39,38 +35,84 @@ export default function SidebarButtons({
   const isPremium = user.plan && String(user.plan).toUpperCase() === 'PREMIUM';
 
   const isTrialActivated = !!user.premiumTrialActivatedAt;
-  
- const isTrialActive = user.premiumTrialActivatedAt
-   ? Date.now() -
-       new Date(user.premiumTrialActivatedAt as string | Date).getTime() <
-     ONE_MONTH_IN_MS
-   : false;
 
-  const hasAccessToSharing = isPremium || isTrialActive || (user.plan === 'FREE' && !isTrialActivated)
+  const isTrialActive = user.premiumTrialActivatedAt
+    ? Date.now() -
+        new Date(user.premiumTrialActivatedAt as string | Date).getTime() <
+      ONE_MONTH_IN_MS
+    : false;
+
+  const hasAccessToSharing =
+    isPremium || isTrialActive || (user.plan === 'FREE' && !isTrialActivated);
+    
+  const isCurrentUserOwner = (list: TaskList) => list.ownerId === user.id;
 
   return (
     <div className="flex flex-col gap-3 mt-6 p-2">
-      {/* Bouton Nouvelle Tâche */}
+      <div className="flex flex-col gap-1 border-t pt-4">
+        <h3 className="text-sm font-semibold mb-2 text-gray-500 uppercase tracking-wider">
+          Mes Listes
+        </h3>
+
+        {taskLists.map((list) => {
+          const isShared = list.sharedWith && list.sharedWith.length > 0;
+          return (
+            <Link
+              key={list.id}
+              href={`/tasks/list/${list.id}`}
+              className={cn(
+                'flex items-center justify-between p-2 rounded-lg transition-colors',
+                'hover:bg-gray-100'
+              )}
+            >
+              <div className="flex items-center truncate">
+                <ListTodo className="h-4 w-4 mr-2 flex-shrink-0 text-gray-600" />
+
+                <span className="truncate text-sm font-medium">
+                  {list.name}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                {isShared && (
+                  <span
+                    title={`Partagée avec ${list.sharedWith.length} personne(s)`}
+                  >
+                    <Users className="h-4 w-4 text-blue-500" />
+                  </span>
+                )}
+
+                {!isCurrentUserOwner(list) && (
+                  <span
+                    className="text-xs text-gray-500"
+                    title={`Propriétaire: ${list.owner.userName}`}
+                  >
+                    Collab
+                  </span>
+                )}
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </div>
+            </Link>
+          );
+        })}
+      </div>
       <Sheet open={isNewTaskSheetOpen} onOpenChange={setIsNewTaskSheetOpen}>
         <SheetTrigger asChild>
           <Button aria-label="Créer une nouvelle tâche" className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle tâche
+            <Plus className="h-4 w-4 mr-2" /> Nouvelle tâche
           </Button>
         </SheetTrigger>
         <SheetContent side="right" className="sm:max-w-md">
           <SheetHeader>
             <SheetTitle>Créer une nouvelle tâche</SheetTitle>
           </SheetHeader>
-          {/* Les props onClose sont gérées par la fonction passée ici */}
+
           <NewTaskForm
             taskLists={taskLists}
             onClose={() => setIsNewTaskSheetOpen(false)}
           />
         </SheetContent>
       </Sheet>
-
-      {/* Bouton Nouvelle Liste */}
       <Sheet open={isNewListSheetOpen} onOpenChange={setIsNewListSheetOpen}>
         <SheetTrigger asChild>
           <Button
@@ -86,6 +128,7 @@ export default function SidebarButtons({
           <SheetHeader>
             <SheetTitle>Nouvelle liste</SheetTitle>
           </SheetHeader>
+
           <NewTaskListForm onClose={() => setIsNewListSheetOpen(false)} />
         </SheetContent>
       </Sheet>
@@ -97,12 +140,9 @@ export default function SidebarButtons({
             className="w-full justify-start relative"
             disabled={!hasAccessToSharing} // Désactivé si l'accès n'est pas là
           >
-            <Users className="h-4 w-4 mr-2" />
-            Partager une liste
+            <Users className="h-4 w-4 mr-2" /> Partager une liste
             {!hasAccessToSharing && (
-              <span className="absolute right-2 text-xs bg-yellow-400 text-black px-1 rounded font-semibold">
-                Pro
-              </span>
+              <span className="absolute right-2 text-xs bg-yellow-400 text-black px-1 rounded font-semibold"></span>
             )}
           </Button>
         </SheetTrigger>
@@ -110,8 +150,6 @@ export default function SidebarButtons({
           <SheetHeader>
             <SheetTitle>Partager une liste</SheetTitle>
           </SheetHeader>
-          {/* Formulaire d'invitation (à créer à la prochaine étape) */}
-          {/* Nous allons l'appeler ShareListForm */}
           <ShareListForm
             taskLists={taskLists}
             onClose={() => setIsShareSheetOpen(false)}
