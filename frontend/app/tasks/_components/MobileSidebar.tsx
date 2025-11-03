@@ -25,7 +25,7 @@ const NavLinks = ({ taskLists }: { taskLists: TaskList[] }) => (
     <h3 className="text-sm font-semibold uppercase text-muted-foreground mb-2 mt-4">
       Général
     </h3>
-    <ul className="space-y-2 mb-6">
+    <ul className="space-y-1 mb-6">
       <li>
         <Link
           href="/tasks"
@@ -57,7 +57,7 @@ const NavLinks = ({ taskLists }: { taskLists: TaskList[] }) => (
             {/* Lien vers la vue de la liste spécifique */}
             <Link
               href={`/tasks/list/${list.id}`}
-              className="flex items-center gap-2 p-2 rounded-md transition text-primary hover:bg-accent hover:text-accent-foreground"
+              className="flex items-center gap-2 p-2 rounded-md transition text-foreground hover:bg-accent hover:text-black"
             >
               <ListCollapse className="h-4 w-4 shrink-0" />
               <span className="truncate">{list.name}</span>

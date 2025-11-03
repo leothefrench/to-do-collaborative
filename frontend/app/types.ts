@@ -55,7 +55,12 @@ export interface TaskList {
   description: string | null;
   ownerId: string;
   owner: SimpleUser;
-  sharedWithUsers: TaskListShare[];
+  // Propriété actuellement utilisée par votre code dans SidebarButtons (corrigera l'erreur TS)
+  sharedWith?: TaskListShare[];
+
+  // Propriété que vous aviez précédemment définie (peut être renvoyée par d'autres API)
+  sharedWithUsers?: TaskListShare[];
+
   tasks: Task[];
   createdAt: string;
   updatedAt: string;

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -130,6 +131,13 @@ export function ChangePasswordDialog() {
                       {...field}
                     />
                   </FormControl>
+                  <Link
+                    href="/forgot-password" 
+                    className="text-sm text-primary hover:text-primary/80 hover:underline block text-right pt-1"
+                    onClick={() => setOpen(false)} 
+                  >
+                    Mot de passe oublié ?       
+                  </Link>
                   <FormMessage />
                 </FormItem>
               )}

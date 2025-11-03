@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ListTodo, Plus, Users, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TaskList } from '../page';
+import { TaskList } from '@/app/types';
 import { UserPayload } from '@/lib/auth';
 import NewTaskListForm from './NewTaskListForm';
 import NewTaskForm from './NewTaskForm';
@@ -61,8 +61,8 @@ export default function SidebarButtons({
               key={list.id}
               href={`/tasks/list/${list.id}`}
               className={cn(
-                'flex items-center justify-between p-2 rounded-lg transition-colors',
-                'hover:bg-gray-100'
+               'flex items-center justify-between p-2 rounded-lg transition-colors',
+                'hover:bg-accent hover:text-accent-foreground'
               )}
             >
               <div className="flex items-center truncate">
@@ -76,7 +76,7 @@ export default function SidebarButtons({
               <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                 {isShared && (
                   <span
-                    title={`Partagée avec ${list.sharedWith.length} personne(s)`}
+                    title={`Partagée avec ${list.sharedWith?.length ?? 0} personne(s)`}
                   >
                     <Users className="h-4 w-4 text-blue-500" />
                   </span>

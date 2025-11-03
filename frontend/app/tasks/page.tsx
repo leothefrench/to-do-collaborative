@@ -12,30 +12,23 @@ import { TaskList } from '@/app/types';
 
 const NavLinks = ({ taskLists: _taskLists }: { taskLists: TaskList[] }) => (
   <nav aria-label="Navigation principale">
-    <ul className="space-y-4">
+    <ul className="space-y-2 mb-6">
       <li>
         <Link href="/tasks" className="flex items-center gap-2 hover:underline">
           <LayoutDashboard className="h-5 w-5" />
-          Toutes les tâches      
-        </Link>{' '}
-           
-      </li>{' '}
-           
+          Toutes les tâches
+        </Link>
+      </li>
       <li>
-        {' '}
-             
         <Link
           href="/tasks/favorites"
           className="flex items-center gap-2 hover:underline"
         >
-           <Star className="h-5 w-5" />
-          Favoris      
-        </Link>{' '}
-             
-      </li>{' '}
-       
-    </ul>{' '}
-     
+          <Star className="h-5 w-5" />
+          Favoris
+        </Link>
+      </li>
+    </ul>
   </nav>
 );
 
@@ -48,11 +41,11 @@ export default async function TasksPage() {
   return (
     <div className="flex min-h-screen">
       <aside className="hidden md:flex w-64 flex-col border-r p-4 bg-background">
-        <h2 className="text-xl font-semibold mb-6">Mes projets</h2>     
+        <h2 className="text-xl font-semibold mb-3">Mes projets</h2>     
           <NavLinks taskLists={taskLists} />
           <SidebarButtons taskLists={taskLists} user={user} />   
       </aside>
-          <MobileSidebar taskLists={taskLists} user={user} />   
+         <MobileSidebar taskLists={taskLists} user={user} />   
       <main className="flex-1 p-6">
         <PaymentNotification />       
         <h1 className="text-2xl font-bold mb-4">Toutes les tâches</h1>

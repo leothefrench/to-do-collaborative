@@ -89,7 +89,7 @@ export default async function ProfilePage() {
           <CardContent className="flex items-center justify-between">
             <div>
               <p className="text-lg font-semibold">
-                Plan actuel :{' '}
+                Plan actuel :
                 <span className="text-primary">
                   {isPremium ? ' Premium' : ' Gratuit'}
                 </span>
