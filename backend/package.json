@@ -18,6 +18,7 @@
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.1",
     "http-status-codes": "^2.3.0",
+    "nodemailer": "^7.0.10",
     "stripe": "^19.1.0"
   },
   "devDependencies": {

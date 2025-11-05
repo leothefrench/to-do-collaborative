@@ -29,6 +29,9 @@ importers:
       http-status-codes:
         specifier: ^2.3.0
         version: 2.3.0
+      nodemailer:
+        specifier: ^7.0.10
+        version: 7.0.10
       stripe:
         specifier: ^19.1.0
         version: 19.1.0
@@ -228,6 +231,10 @@ packages:
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
+
+  nodemailer@7.0.10:
+    resolution: {integrity: sha512-Us/Se1WtT0ylXgNFfyFSx4LElllVLJXQjWi2Xz17xWw7amDKO2MLtFnVp1WACy7GkVGs+oBlRopVNUzlrGSw1w==}
+    engines: {node: '>=6.0.0'}
 
   object-inspect@1.13.4:
     resolution: {integrity: sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==}
@@ -558,6 +565,8 @@ snapshots:
       set-cookie-parser: 2.7.1
 
   math-intrinsics@1.1.0: {}
+
+  nodemailer@7.0.10: {}
 
   object-inspect@1.13.4: {}
 

@@ -57,7 +57,7 @@ export const ForgotPasswordForm = () => {
 
     try {
       // Endpoint typique pour demander un lien/code de réinitialisation
-      const response = await fetch(`${API_URL}/forgot-password`, {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

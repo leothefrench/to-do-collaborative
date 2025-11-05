@@ -18,6 +18,8 @@ model User {
   premiumTrialActivatedAt DateTime?
   ownedTaskLists TaskList[] 
   sharedTaskLists TaskListShare[]
+  resetToken          String?  @unique
+  resetTokenExpiresAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

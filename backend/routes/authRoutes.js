@@ -3,7 +3,10 @@ import {
   registerSchema,
   loginSchema,
   changePasswordSchema,
+  forgotPasswordSchema,
 } from '../schemas/userSchemas.js';
+import { sendEmail } from '../utils/emailService.js';
+import * as crypto from 'crypto';
 
 export default async function (fastify, option) {
   fastify.route({
@@ -170,6 +173,7 @@ export default async function (fastify, option) {
       }
     },
   });
+
   fastify.route({
     method: 'DELETE', // ⬅️ Le verbe DELETE
     url: '/account', // ⬅️ La route sera /auth/account
@@ -194,4 +198,81 @@ export default async function (fastify, option) {
       }
     },
   });
+
+fastify.route({
+  method: 'POST',
+  url: '/forgot-password',
+  schema: forgotPasswordSchema,
+  handler: async (request, reply) => {
+    try {
+      const { email } = request.body;
+
+      const user = await fastify.prisma.user.findUnique({
+        where: { email },
+      });
+
+      // SECURITÉ: On renvoie un succès même si l'utilisateur n'existe pas
+      if (!user) {
+        request.log.warn(
+          `Tentative de mot de passe oublié pour email inconnu: ${email}`
+        );
+        return reply.status(200).send({
+          message:
+            'Si cet utilisateur existe, un lien de réinitialisation lui a été envoyé.',
+        });
+      }
+
+      // --- 1. GÉNÉRATION DU JETON SÉCURISÉ ---
+      // Génère un jeton aléatoire long (pas un JWT)
+      const resetToken = crypto.randomBytes(32).toString('hex');
+
+      // Définit l'expiration (ex: 15 minutes)
+      const resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      // --- 2. STOCKAGE DANS PRISMA ---
+      await fastify.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetToken: resetToken,
+          resetTokenExpiresAt: resetTokenExpiresAt,
+        },
+      });
+
+      // --- 3. PRÉPARATION DU LIEN ET DU CONTENU ---
+      // L'URL du frontend doit pointer vers la page de réinitialisation avec le token
+      const frontendUrl =
+        process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(
+        user.email
+      )}`;
+
+      const subject = 'Réinitialisation de votre mot de passe';
+      const htmlContent = `
+        <p>Bonjour,</p>
+        <p>Vous avez demandé la réinitialisation de votre mot de passe. Veuillez cliquer sur le lien ci-dessous. Ce lien expirera dans 15 minutes.</p>
+        <a href="${resetLink}">Réinitialiser mon mot de passe</a>
+        <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet e-mail.</p>
+      `;
+
+      // --- 4. ENVOI DE L'EMAIL VIA MAIJET (emailService) ---
+      await sendEmail({
+        to: user.email,
+        subject: subject,
+        text: `Réinitialisez votre mot de passe en cliquant sur ce lien : ${resetLink}`,
+        html: htmlContent,
+      });
+
+      // --- Réponse finale ---
+      reply.status(200).send({
+        message:
+          'Si cet utilisateur existe, un lien de réinitialisation lui a été envoyé.',
+      });
+    } catch (error) {
+      request.log.error(error, 'Erreur dans forgot-password');
+      reply.status(500).send({
+        message: 'Erreur serveur lors de la demande de réinitialisation.',
+      });
+    }
+  },
+});
 }
