@@ -65,3 +65,8 @@ export interface TaskList {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ResetPasswordFormData {
+  newPassword: string;
+  confirmPassword: string;
+}

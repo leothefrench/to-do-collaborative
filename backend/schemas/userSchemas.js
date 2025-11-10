@@ -66,3 +66,21 @@ export const forgotPasswordSchema = {
     },
   },
 };
+
+export const resetPasswordSchema = {
+  body: {
+    type: 'object',
+    required: ['token', 'newPassword'],
+    properties: {
+      token: {
+        type: 'string',
+        description: 'Le jeton de réinitialisation de mot de passe unique.',
+      },
+      newPassword: {
+        type: 'string',
+        minLength: 8, // Exige au moins 8 caractères pour le nouveau mot de passe
+        description: "Le nouveau mot de passe de l'utilisateur.",
+      },
+    },
+  },
+};

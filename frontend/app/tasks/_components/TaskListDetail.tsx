@@ -1,8 +1,6 @@
-// app/components/TaskListDetail.tsx
 
-'use client'; // Ce composant aura besoin d'être client pour les interactions futures
+'use client';
 
-// Importations corrigées
 import { TaskList, Task } from '@/app/types'; // Import des types que nous avons créés
 import { UserPayload } from '@/lib/auth'; // Import du type UserPayload
 import { ScrollArea } from '@/components/ui/scroll-area';

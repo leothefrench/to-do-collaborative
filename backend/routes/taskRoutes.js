@@ -39,29 +39,50 @@ export default async function taskRoutes(fastify, options) {
     },
   });
 
-  // 🔹 Récupérer toutes les tâches de l’utilisateur (via ses TaskLists)
-  fastify.route({
-    method: 'GET',
-    url: '/tasks',
-    preHandler: [fastify.authenticate],
-    handler: async (request, reply) => {
-      try {
-        const tasks = await fastify.prisma.task.findMany({
-          where: {
-            taskList: {
-              ownerId: request.user.userId, // ✅ filtre par propriétaire
-            },
-          },
-        });
-        reply.status(200).send(tasks);
-      } catch (error) {
-        request.log.error(error);
-        reply.status(500).send({
-          message: 'Erreur lors de la récupération des tâches',
-        });
+fastify.route({
+  method: 'GET',
+  url: '/tasks',
+  preHandler: [fastify.authenticate],
+  handler: async (request, reply) => {
+    try {
+      const userId = request.user.userId;
+
+      // 1. Récupération du paramètre de filtre de l'URL (request.query)
+      const { taskListId } = request.query;
+
+      // 2. Initialisation de la condition WHERE
+      const whereCondition = {
+        // Condition de sécurité de base : ne montrer que les tâches des listes
+        // que l'utilisateur possède.
+        // NOTE: Il faudrait étendre cette logique pour inclure les listes partagées plus tard.
+        taskList: {
+          ownerId: userId,
+        },
+      };
+
+      // 3. Ajout du filtre par ID de liste SI le paramètre est présent
+      if (taskListId) {
+        // Ajouter la contrainte : la tâche DOIT appartenir à cette taskListId
+        whereCondition.taskListId = taskListId;
       }
-    },
-  });
+
+      // 4. Exécution de la requête avec la condition WHERE dynamique
+      const tasks = await fastify.prisma.task.findMany({
+        where: whereCondition,
+        orderBy: {
+          createdAt: 'asc', // Optionnel : trier pour l'affichage
+        },
+      });
+
+      reply.status(200).send(tasks);
+    } catch (error) {
+      request.log.error(error);
+      reply.status(500).send({
+        message: 'Erreur lors de la récupération des tâches',
+      });
+    }
+  },
+});
 
   // 🔹 Récupérer une tâche par ID
   fastify.route({
