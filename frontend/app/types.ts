@@ -45,6 +45,7 @@ export interface Task {
   dueDate: string | null;
   priority: Priority;
   taskListId: string;
+  isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,11 +1,10 @@
+// frontend/app/tasks/_components/TasksListRenderer.tsx
 'use client';
 
-import { useQueries, useQueryClient } from '@tanstack/react-query';
-import {
-  getTaskLists,
-  deleteTask,
-  toggleTaskFavorite,
-} from '@/actions/taskActions';
+import { Task } from '@/app/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { deleteTask, toggleTaskFavorite } from '@/actions/taskActions';
+import { Trash2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -18,76 +17,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Trash2, Star } from 'lucide-react';
-import { Task } from '@/app/types';
 
-export default function AllTasks({ user }: { user: { id: string } | null }) {
+interface TasksListRendererProps {
+  tasks: Task[];
+}
+
+export default function TasksListRenderer({ tasks }: TasksListRendererProps) {
   const queryClient = useQueryClient();
-
-  const [
-    { data: tasks = [], isLoading: tasksLoading, isError: tasksError },
-    { isLoading: listsLoading, isError: listsError },
-  ] = useQueries({
-    queries: [
-      {
-        queryKey: ['tasks', user?.id],
-        queryFn: async () => {
-          const API_URL =
-            process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-          const res = await fetch(`${API_URL}/tasks`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            cache: 'no-store',
-          });
-
-          if (!res.ok) {
-            return [];
-          }
-          return res.json();
-        },
-        enabled: !!user,
-      },
-      {
-        queryKey: ['taskLists', user?.id],
-        queryFn: () => {
-          return getTaskLists();
-        },
-        enabled: !!user,
-      },
-    ],
-  });
 
   const handleDeleteTask = async (taskId: string) => {
     await deleteTask(taskId);
-    queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
 
-  // NOUVELLE FONCTION : Basculer le statut favori
   const handleToggleFavorite = async (task: Task) => {
     await toggleTaskFavorite(task.id, task.isFavorite);
-    queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
 
-  if (tasksLoading || listsLoading) {
-    return <p>Chargement des données...</p>;
-  }
-
-  if (tasksError || listsError) {
-    return (
-      <p>Erreur lors du chargement des données. Veuillez vous reconnecter.</p>
-    );
-  }
-
-  if (!user) {
-    return <p>Veuillez vous connecter pour voir vos tâches.</p>;
-  }
-
   return (
-    <>
+    <div className="space-y-4">
       {tasks.length === 0 ? (
         <p>Aucune tâche pour le moment.</p>
       ) : (
@@ -96,6 +45,7 @@ export default function AllTasks({ user }: { user: { id: string } | null }) {
             <li
               key={task.id}
               className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition flex items-center justify-between"
+              role="listitem"
             >
               <div>
                 <h3 className="font-semibold">{task.title}</h3>
@@ -107,9 +57,7 @@ export default function AllTasks({ user }: { user: { id: string } | null }) {
                 </p>
               </div>
 
-              {/* NOUVEAU BLOC : Boutons Favoris et Suppression */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                {/* BOUTON FAVORIS */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -132,13 +80,12 @@ export default function AllTasks({ user }: { user: { id: string } | null }) {
                   )}
                 </Button>
 
-                {/* BOUTON SUPPRESSION */}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="destructive"
                       size="icon"
-                      aria-label="Supprimer la tâche"
+                      aria-label={`Supprimer la tâche ${task.title}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -168,6 +115,6 @@ export default function AllTasks({ user }: { user: { id: string } | null }) {
           ))}
         </ul>
       )}
-    </>
+    </div>
   );
 }

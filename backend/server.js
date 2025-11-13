@@ -28,7 +28,7 @@ const fastify = Fastify({ logger: true });
 // CORS Policy
 fastify.register(cors, {
   origin: 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   credentials: true,
 });
 

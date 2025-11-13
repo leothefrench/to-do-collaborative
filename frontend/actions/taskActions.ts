@@ -2,11 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+import { Task } from '@/app/types';
 
 const API_URL = 'http://localhost:3001';
-
-// 🛠️ UTILITIES POUR AUTHENTIFICATION ET ERREURS
-// -----------------------------------------------------
 
 // Fonction pour récupérer le token JWT du cookie HttpOnly (côté Server Action)
 async function getTokenFromCookie(): Promise<string> {
@@ -189,7 +187,6 @@ export async function getTasksByTaskListId(taskListId: string) {
 
     const tasks = await res.json();
 
-    // ✅ AJOUT DE LA LIGNE DE DÉBOGAGE
     console.log(
       `IDs de tâches reçus pour la liste ${taskListId}:`,
       tasks.map((t) => t.id)
@@ -201,5 +198,77 @@ export async function getTasksByTaskListId(taskListId: string) {
     console.error('getTasksByTaskListId error:', errorMessage); // Retourne un tableau vide en cas d'erreur
 
     return [];
+  }
+}
+
+export async function getTasksByFavorite(): Promise<Task[]> {
+  try {
+    const token = await getTokenFromCookie();
+
+    
+    const res = await fetch(`${API_URL}/tasks?isFavorite=true`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      // Important : désactiver le cache pour les données dynamiques
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      // Une erreur du backend sera levée ici
+      throw new Error('Échec de la récupération des tâches favorites.');
+    }
+
+    const tasks: Task[] = await res.json();
+    return tasks;
+  } catch (error) {
+    const errorMessage = toErrorMessage(error);
+    console.error('getTasksByFavorite error:', errorMessage);
+
+    // Retourne un tableau vide en cas d'erreur
+    return [];
+  }
+}
+
+export async function toggleTaskFavorite(
+  taskId: string,
+  isCurrentlyFavorite: boolean
+) {
+  'use server';
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+  // Logique pour déterminer la nouvelle valeur (l'inverse de l'état actuel)
+  const newFavoriteStatus = !isCurrentlyFavorite;
+
+  try {
+    const token = await getTokenFromCookie();
+  const res = await fetch(`${API_URL}/tasks/${taskId}/favorite`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      // ⭐️ LA CORRECTION : Ajout de l'en-tête Authorization
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ isFavorite: isCurrentlyFavorite }),
+    credentials: 'include',
+  });
+
+    if (!res.ok) {
+      // Pour une meilleure gestion des erreurs, on peut retourner un message.
+      const errorText = await res.text();
+      throw new Error(
+        `Échec de la mise à jour du statut favori : ${errorText}`
+      );
+    }
+
+    // ⭐️ TRÈS IMPORTANT : Invalider le cache pour forcer la mise à jour des deux pages
+    revalidatePath('/tasks');
+    revalidatePath('/tasks/favorites'); // Cela rafraîchit la page des favoris après modification
+
+    return { success: true, newStatus: newFavoriteStatus };
+  } catch (error) {
+    console.error('Erreur toggleTaskFavorite:', error);
+    return { success: false, error: (error as Error).message };
   }
 }

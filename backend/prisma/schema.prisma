@@ -48,6 +48,7 @@ model Task {
   status State
   dueDate DateTime?
   priority Priority
+  isFavorite Boolean @default(false)
   taskListId String  
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
