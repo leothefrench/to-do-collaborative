@@ -8,3 +8,9 @@ export async function logout() {
   redirect('/sign-in');
 }
 
+export async function isLoggedIn() {
+  const cookieStore = cookies();
+  const tokenCookie = (await cookieStore).get('token');
+
+  return !!tokenCookie?.value;
+}

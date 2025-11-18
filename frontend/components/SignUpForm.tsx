@@ -25,6 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from './ui/form';
+import { toast } from 'sonner';
 
 const signUpFormSchema = z
   .object({
@@ -62,29 +63,32 @@ export const SignUpForm = () => {
     // On retire le confirmPassword avant d'envoyer au backend
     const { confirmPassword, ...dataToSend } = values;
 
-    try {
-      const response = await fetch('http://localhost:3001/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(dataToSend),
-      });
+try {
+  const response = await fetch('http://localhost:3001/auth/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(dataToSend),
+  });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erreur d'inscription");
-      }
+  if (!response.ok) {
+    const errorData = await response.json();
+    // Utilisation de toast.error pour l'UX
+    toast.error(errorData.message || "Erreur d'inscription");
+    return; // Sortir après l'affichage de l'erreur
+  }
 
-      router.push('/tasks');
-      router.refresh();
-      form.reset();
-    } catch (error) {
-      console.error("Erreur lors de l'inscription :", error);
-    } finally {
-      setIsLoading(false);
-    }
+  router.push('/plan-selection');
+
+  router.refresh();
+  form.reset();
+} catch (error) {
+  console.error("Erreur lors de l'inscription :", error);
+} finally {
+  setIsLoading(false);
+}
   };
 
   return (

@@ -5,11 +5,44 @@ export default async function taskListRoutes(fastify, options) {
     url: '/tasklists',
     preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
+      // ⭐ AJOUT 1 : Récupérer l'ID de l'utilisateur pour la réutilisation
+      const userId = request.user.userId;
+      // ⭐ AJOUT 2 : Constante pour définir la limite du plan gratuit
+      const FREE_PLAN_LIMIT = 3;
+
       try {
+
+
+        // 1. Récupérer le plan actuel de l'utilisateur (FREE, PREMIUM, etc.)
+        const user = await fastify.prisma.user.findUnique({
+          where: { id: userId },
+          select: { plan: true },
+        });
+
+        if (!user) {
+          return reply.status(404).send({ message: 'Utilisateur non trouvé.' });
+        }
+
+        // 2. Vérification de la limite si le plan est 'FREE'
+        if (user.plan === 'FREE') {
+          const listCount = await fastify.prisma.taskList.count({
+            where: { ownerId: userId }, // Compte combien de listes l'utilisateur possède déjà
+          });
+
+          if (listCount >= FREE_PLAN_LIMIT) {
+            // 3. BLOQUER : Renvoyer un statut 403 (Interdit)
+            return reply.status(403).send({
+              message: `Le plan gratuit est limité à ${FREE_PLAN_LIMIT} listes. Veuillez passer au Premium.`,
+              errorCode: 'FREE_LIMIT', // Un code d'erreur utile pour le Frontend
+            });
+          }
+        }
+
         const taskList = await fastify.prisma.taskList.create({
           data: {
             ...request.body,
-            ownerId: request.user.userId,
+
+            ownerId: userId,
           },
         });
         reply.status(201).send(taskList);

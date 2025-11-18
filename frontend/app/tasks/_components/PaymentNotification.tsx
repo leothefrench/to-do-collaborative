@@ -9,19 +9,13 @@ export default function PaymentNotification() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    // 1. Détecter le paramètre
+
     const paymentStatus = searchParams.get('payment');
 
     if (paymentStatus === 'success') {
       setShowSuccess(true);
-      // Optionnel: Recharger les données utilisateur (à implémenter si vos données ne se rafraîchissent pas automatiquement)
-      // fetchUserData();
-
-      // 2. Nettoyer l'URL
-      // Crée une URL sans le paramètre 'payment' et remplace l'entrée de l'historique
       router.replace('/tasks', { scroll: false });
 
-      // 3. Masquer le message après un court délai (Ex: 5 secondes)
       const timer = setTimeout(() => {
         setShowSuccess(false);
       }, 5000);

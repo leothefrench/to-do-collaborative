@@ -40,7 +40,12 @@ export default async function (fastify, option) {
 
         reply.status(201).send({
           message: 'User created successfully',
-          user: { id: user.id, email: user.email, userName: user.userName },
+          user: {
+            id: user.id,
+            email: user.email,
+            userName: user.userName,
+            plan: user.plan,
+          },
         }); // On ne renvoie plus le token directement dans le body
       } catch (error) {
         request.log.error(error);
@@ -91,6 +96,7 @@ export default async function (fastify, option) {
             id: user.id,
             email: user.email,
             userName: user.userName,
+            plan: user.plan,
           },
         });
       } catch (error) {

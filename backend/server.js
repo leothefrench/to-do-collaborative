@@ -3,7 +3,7 @@ import fastifyJwt from '@fastify/jwt';
 import prismaPlugin from './plugins/prisma.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
-import taskListRoutes from './routes/tasklistRoutes.js';
+import taskListRoutes from './routes/taskListRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import stripePlugin from './plugins/stripe.js';
 import billingRoutes from './routes/billingRoutes.js';
@@ -82,7 +82,7 @@ fastify.register(async (instance, opts) => {
   instance.register(userRoutes);
   instance.register(taskListRoutes);
   instance.register(taskRoutes);
-  instance.register(billingRoutes);
+  instance.register(billingRoutes, { prefix: '/billing' });
   instance.register(webhookRoutes);
   instance.register(tasklistShareRoutes);
 

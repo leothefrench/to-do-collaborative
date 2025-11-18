@@ -13,7 +13,6 @@ export default function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
       <p className="mt-4 text-lg text-muted-foreground max-w-xl">
         Un tableau simple, rapide, pour enfin <strong>avancer</strong>.
       </p>
-      {/* ✅ UTILISEZ MAINTENANT LA PROP isLoggedIn */}
       {isLoggedIn ? (
         <div className="flex flex-col items-center mt-6">
           <p className="text-lg font-medium mb-4">
@@ -31,7 +30,7 @@ export default function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </div>
       ) : (
-        // Version non connectée
+
         <div className="flex flex-col items-center mt-6">
           <div className="flex space-x-4">
             <Link href="/sign-in">

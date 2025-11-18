@@ -1,4 +1,3 @@
-// backend/routes/stripeWebhook.js
 import { StatusCodes } from 'http-status-codes';
 import Stripe from 'stripe';
 

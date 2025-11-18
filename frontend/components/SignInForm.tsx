@@ -67,7 +67,18 @@ export const SignInForm = () => {
         return;
       }
 
-      router.push('/tasks');
+			const responseData = await response.json();
+      const userPlan = responseData.user?.plan;
+
+      // Redirection conditionnelle basée sur le plan
+      if (userPlan === 'FREE') {
+        // Redirige les nouveaux utilisateurs ou utilisateurs FREE vers la sélection de plan
+        router.push('/plan-selection');
+      } else {
+        // Redirige les utilisateurs PREMIUM (ou ceux déjà abonnés) vers les tâches
+        router.push('/tasks');
+      }
+
       router.refresh();
       form.reset();
     } catch (error) {
@@ -124,6 +135,7 @@ export const SignInForm = () => {
               Se connecter
             </Button>
           </CardFooter>
+          
         </form>
       </Form>
     </Card>
